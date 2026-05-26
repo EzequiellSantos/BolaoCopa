@@ -23,6 +23,14 @@ class EnvironmentVariables {
 
   @IsString()
   JWT_EXPIRES_IN: string;
+
+  @IsString()
+  @IsOptional()
+  FRONTEND_URLS?: string;
+
+  @IsString()
+  @IsOptional()
+  FRONTEND_URL?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>) {

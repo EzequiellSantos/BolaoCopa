@@ -1,5 +1,5 @@
-import { calculateBetScore } from './Scoring.util';
-import { BetResult } from '../../modules/bets/schemas/Bet.schema';
+import { calculateBetScore } from './scoring.util';
+import { BetResult } from '../../modules/bets/schemas/bet.schema';
 
 describe('calculateBetScore', () => {
   it('deve retornar EXACT e 3 pontos para placar exato', () => {

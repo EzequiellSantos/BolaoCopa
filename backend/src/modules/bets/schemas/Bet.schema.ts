@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { User } from '../../users/schemas/User.schema';
-import { Match } from '../../matches/schemas/Match.schema';
+import { User } from '../../users/schemas/user.schema';
+import { Match } from '../../matches/schemas/match.schema';
 
 export type BetDocument = Bet & Document;
 

@@ -11,12 +11,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { MatchesService } from './Matches.service';
-import { CreateMatchDto } from './dto/Create-match.dto';
-import { UpdateMatchDto } from './dto/Update-match.dto';
-import { JwtAuthGuard } from '../../common/guards/Jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/Roles.guard';
-import { Roles } from '../../common/decorators/Roles.decorators';
+import { MatchesService } from './matches.service';
+import { CreateMatchDto } from './dto/create-match.dto';
+import { UpdateMatchDto } from './dto/update-match.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorators';
 import { UserRole } from '../users/schemas/user.schema';
 import { MatchStatus } from './schemas/match.schema';
 

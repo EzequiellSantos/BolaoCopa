@@ -10,15 +10,15 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { UsersService } from './Users.service';
-import { CreateUserDto } from './dto/Create-user.dto';
+import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtAuthGuard } from '../../common/guards/Jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/Roles.guard';
-import { Roles } from '../../common/decorators/Roles.decorators';
-import { CurrentUser } from '../../common/decorators/Current-user.decorator';
-import { UserRole } from './schemas/User.schema';
-import { RequestUser } from '../auth/interfaces/Request-user.interface';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorators';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { UserRole } from './schemas/user.schema';
+import { RequestUser } from '../auth/interfaces/request-user.interface';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)

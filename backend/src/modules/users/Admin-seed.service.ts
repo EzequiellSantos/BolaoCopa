@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { UsersService } from './Users.service';
+import { UsersService } from './users.service';
 
 @Injectable()
 export class AdminSeedService implements OnApplicationBootstrap {

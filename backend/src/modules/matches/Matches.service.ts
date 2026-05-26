@@ -7,9 +7,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Match, MatchDocument, MatchStatus } from './schemas/match.schema';
 import { Bet, BetDocument } from '../bets/schemas/bet.schema';
-import { CreateMatchDto } from './dto/Create-match.dto';
-import { UpdateMatchDto } from './dto/Update-match.dto';
-import { calculateBetScore } from '../../common/utils/Scoring.util';
+import { CreateMatchDto } from './dto/create-match.dto';
+import { UpdateMatchDto } from './dto/update-match.dto';
+import { calculateBetScore } from '../../common/utils/scoring.util';
 
 @Injectable()
 export class MatchesService {

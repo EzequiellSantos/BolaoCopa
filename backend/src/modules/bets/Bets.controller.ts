@@ -10,12 +10,12 @@ import {
 import { BetsService } from './bets.service';
 import { CreateBetDto } from './dto/create-bet.dto';
 import { UpdateBetDto } from './dto/update-bet.dto';
-import { JwtAuthGuard } from '../../common/guards/Jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/Roles.guard';
-import { Roles } from '../../common/decorators/Roles.decorators';
-import { CurrentUser } from '../../common/decorators/Current-user.decorator';
-import { RequestUser } from '../auth/interfaces/Request-user.interface';
-import { UserRole } from '../users/schemas/User.schema';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorators';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RequestUser } from '../auth/interfaces/request-user.interface';
+import { UserRole } from '../users/schemas/user.schema';
 
 @Controller('bets')
 @UseGuards(JwtAuthGuard)

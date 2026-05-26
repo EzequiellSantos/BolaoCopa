@@ -6,9 +6,9 @@ import jwtConfig from './config/jwt.config';
 import { validateEnv } from './config/env.validation';
 import { AuthModule } from './modules/auth/Auth.module';
 import { UsersModule } from './modules/users/Users.module';
-import { MatchesModule } from './modules/matches/Matches.module';
+import { MatchesModule } from './modules/matches/matches.module';
 import { BetsModule } from './modules/bets/Bets.module';
-import { RankingModule } from './modules/ranking/Ranking.module';
+import { RankingModule } from './modules/ranking/ranking.module';
 
 @Module({
   imports: [

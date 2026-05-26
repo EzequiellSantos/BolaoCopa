@@ -1,4 +1,4 @@
-import { BetResult } from '../../modules/bets/schemas/Bet.schema';
+import { BetResult } from '../../modules/bets/schemas/bet.schema';
 
 interface ScoreInput {
   betHomeScore: number;

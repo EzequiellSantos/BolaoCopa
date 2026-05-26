@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Bet, BetSchema } from '../bets/schemas/bet.schema';
-import { RankingService } from './Ranking.service';
-import { RankingController } from './Ranking.controller';
+import { RankingService } from './ranking.service';
+import { RankingController } from './ranking.controller';
 
 @Module({
   imports: [

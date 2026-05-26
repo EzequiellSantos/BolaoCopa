@@ -1,4 +1,4 @@
-import axios, { AxiosError } from '@/api/axios';
+import axios, { AxiosError } from 'axios';
 import type { ApiError } from '../types';
 
 export const api = axios.create({

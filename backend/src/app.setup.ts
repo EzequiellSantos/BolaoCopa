@@ -1,12 +1,16 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
+function normalizeOrigin(origin: string): string {
+  return origin.trim().replace(/\/$/, '');
+}
+
 function getAllowedOrigins(): string[] {
   const rawOrigins = process.env.FRONTEND_URLS ?? process.env.FRONTEND_URL ?? '';
 
   return rawOrigins
     .split(',')
-    .map((origin) => origin.trim())
+    .map(normalizeOrigin)
     .filter(Boolean);
 }
 
@@ -17,14 +21,14 @@ export function setupApp(app: INestApplication) {
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
         callback(null, true);
         return;
       }
 
-      callback(new Error('Origin not allowed by CORS'));
+      callback(null, false);
     },
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 

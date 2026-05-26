@@ -4,6 +4,11 @@ import { MongooseModule } from '@nestjs/mongoose';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import { validateEnv } from './config/env.validation';
+import { AuthModule } from './modules/auth/Auth.module';
+import { UsersModule } from './modules/users/Users.module';
+import { MatchesModule } from './modules/matches/Matches.module';
+import { BetsModule } from './modules/bets/Bets.module';
+import { RankingModule } from './modules/ranking/Ranking.module';
 
 @Module({
   imports: [
@@ -33,12 +38,12 @@ import { validateEnv } from './config/env.validation';
       inject: [ConfigService],
     }),
 
-    // ─── Feature Modules (adicionados nas próximas etapas) ─────────────
-    // AuthModule,
-    // UsersModule,
-    // MatchesModule,
-    // BetsModule,
-    // RankingModule,
+    // ─── Feature Modules ────────────────────────────────────────────────
+    AuthModule,
+    UsersModule,
+    MatchesModule,
+    BetsModule,
+    RankingModule,
   ],
 })
 export class AppModule {}

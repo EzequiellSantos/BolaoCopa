@@ -8,8 +8,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Bet, BetDocument, BetResult } from './schemas/bet.schema';
 import { Match, MatchDocument, MatchStatus } from '../matches/schemas/match.schema';
-import { CreateBetDto } from './dto/Create-bet.dto';
-import { UpdateBetDto } from './dto/Update-bet.dto';
+import { CreateBetDto } from './dto/create-bet.dto';
+import { UpdateBetDto } from './dto/update-bet.dto';
 
 @Injectable()
 export class BetsService {

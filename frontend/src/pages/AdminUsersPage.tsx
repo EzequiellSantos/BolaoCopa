@@ -4,90 +4,72 @@ import { getErrorMessage } from '../api/axios';
 import type { User } from '../types';
 import { UserRole } from '../types';
 import Modal from '../components/Modal';
+import Spinner from '../components/Spinner';
+import ErrorBanner from '../components/ErrorBanner';
+import EmptyState from '../components/EmptyState';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { useToast } from '../contexts/ToastContext';
 
 interface UserFormData {
-  name: string;
-  email: string;
-  password: string;
-  role: UserRole;
+  name: string; email: string; password: string; role: UserRole;
 }
-
 const emptyForm: UserFormData = { name: '', email: '', password: '', role: UserRole.USER };
 
 export default function AdminUsersPage() {
-  const [users, setUsers]       = useState<User[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState('');
-  const [modal, setModal]       = useState<'create' | 'edit' | null>(null);
-  const [selected, setSelected] = useState<User | null>(null);
-  const [form, setForm]         = useState<UserFormData>(emptyForm);
-  const [saving, setSaving]     = useState(false);
+  const toast = useToast();
+  const [users, setUsers]         = useState<User[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState('');
+  const [modal, setModal]         = useState<'create' | 'edit' | null>(null);
+  const [selected, setSelected]   = useState<User | null>(null);
+  const [toToggle, setToToggle]   = useState<User | null>(null);
+  const [form, setForm]           = useState<UserFormData>(emptyForm);
+  const [saving, setSaving]       = useState(false);
   const [formError, setFormError] = useState('');
 
   const load = async () => {
-    try {
-      setLoading(true);
-      setUsers(await usersApi.list());
-    } catch (e) {
-      setError(getErrorMessage(e));
-    } finally {
-      setLoading(false);
-    }
+    try { setLoading(true); setUsers(await usersApi.list()); setError(''); }
+    catch (e) { setError(getErrorMessage(e)); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { load(); }, []);
 
-  const openCreate = () => {
-    setForm(emptyForm);
-    setFormError('');
-    setSelected(null);
-    setModal('create');
-  };
-
-  const openEdit = (user: User) => {
-    setForm({ name: user.name, email: user.email, password: '', role: user.role });
-    setFormError('');
-    setSelected(user);
-    setModal('edit');
-  };
-
+  const openCreate = () => { setForm(emptyForm); setFormError(''); setSelected(null); setModal('create'); };
+  const openEdit   = (u: User) => { setForm({ name: u.name, email: u.email, password: '', role: u.role }); setFormError(''); setSelected(u); setModal('edit'); };
   const closeModal = () => { setModal(null); setSelected(null); };
 
   const handleSave = async () => {
-    setSaving(true);
-    setFormError('');
+    setSaving(true); setFormError('');
     try {
       if (modal === 'create') {
         await usersApi.create(form);
+        toast.success('Usuário criado com sucesso!');
       } else if (selected) {
         const payload: Partial<UserFormData> = { name: form.name, email: form.email, role: form.role };
         if (form.password) payload.password = form.password;
         await usersApi.update(selected._id, payload);
+        toast.success('Usuário atualizado!');
       }
-      await load();
-      closeModal();
-    } catch (e) {
-      setFormError(getErrorMessage(e));
-    } finally {
-      setSaving(false);
-    }
+      await load(); closeModal();
+    } catch (e) { setFormError(getErrorMessage(e)); }
+    finally { setSaving(false); }
   };
 
-  const handleToggleActive = async (user: User) => {
+  const handleToggleActive = async () => {
+    if (!toToggle) return;
     try {
-      await usersApi.update(user._id, { isActive: !user.isActive });
+      await usersApi.update(toToggle._id, { isActive: !toToggle.isActive });
+      toast.info(`Usuário ${toToggle.isActive ? 'desativado' : 'ativado'}.`);
       await load();
-    } catch (e) {
-      alert(getErrorMessage(e));
-    }
+    } catch (e) { toast.error(getErrorMessage(e)); }
+    finally { setToToggle(null); }
   };
 
-  const field = (key: keyof UserFormData, value: string) =>
-    setForm(f => ({ ...f, [key]: value }));
+  const field = (key: keyof UserFormData, v: string) => setForm(f => ({ ...f, [key]: v }));
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-white">👥 Usuários</h1>
@@ -96,14 +78,12 @@ export default function AdminUsersPage() {
         <button onClick={openCreate} className="btn-primary text-sm">+ Novo usuário</button>
       </div>
 
-      {/* Error */}
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && <ErrorBanner message={error} onRetry={load} />}
 
-      {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
-        </div>
+        <div className="flex justify-center py-16"><Spinner size="lg" /></div>
+      ) : users.length === 0 ? (
+        <EmptyState emoji="👥" title="Nenhum usuário" description="Crie o primeiro participante." action={{ label: '+ Novo usuário', onClick: openCreate }} />
       ) : (
         <div className="card p-0 overflow-hidden">
           <div className="overflow-x-auto">
@@ -133,11 +113,9 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3 flex items-center gap-2">
-                      <button onClick={() => openEdit(u)} className="text-xs btn-secondary px-2 py-1">
-                        Editar
-                      </button>
+                      <button onClick={() => openEdit(u)} className="text-xs btn-secondary px-2 py-1">Editar</button>
                       <button
-                        onClick={() => handleToggleActive(u)}
+                        onClick={() => setToToggle(u)}
                         className={`text-xs px-2 py-1 rounded-lg font-semibold transition-colors ${u.isActive ? 'bg-red-900/50 text-red-400 hover:bg-red-900' : 'bg-green-900/50 text-green-400 hover:bg-green-900'}`}
                       >
                         {u.isActive ? 'Desativar' : 'Ativar'}
@@ -145,23 +123,16 @@ export default function AdminUsersPage() {
                     </td>
                   </tr>
                 ))}
-                {users.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-10 text-center text-gray-600">Nenhum usuário encontrado.</td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
-      {/* Modal criar/editar */}
       {modal && (
         <Modal title={modal === 'create' ? 'Novo Usuário' : 'Editar Usuário'} onClose={closeModal}>
           <div className="space-y-4">
-            {formError && <p className="text-red-400 text-sm bg-red-950/40 border border-red-800/40 rounded-lg px-3 py-2">{formError}</p>}
-
+            {formError && <ErrorBanner message={formError} />}
             <div>
               <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">Nome</label>
               <input className="input" value={form.name} onChange={e => field('name', e.target.value)} placeholder="Nome completo" />
@@ -183,15 +154,25 @@ export default function AdminUsersPage() {
                 <option value={UserRole.ADMIN}>ADMIN</option>
               </select>
             </div>
-
             <div className="flex gap-3 pt-2">
               <button onClick={handleSave} disabled={saving} className="btn-primary flex-1">
-                {saving ? 'Salvando...' : 'Salvar'}
+                {saving ? <span className="flex items-center justify-center gap-2"><Spinner size="sm" /> Salvando...</span> : 'Salvar'}
               </button>
               <button onClick={closeModal} className="btn-secondary flex-1">Cancelar</button>
             </div>
           </div>
         </Modal>
+      )}
+
+      {toToggle && (
+        <ConfirmDialog
+          title={toToggle.isActive ? 'Desativar usuário?' : 'Ativar usuário?'}
+          description={`${toToggle.name} ${toToggle.isActive ? 'não poderá mais acessar o sistema.' : 'voltará a ter acesso ao sistema.'}`}
+          confirmLabel={toToggle.isActive ? 'Desativar' : 'Ativar'}
+          danger={toToggle.isActive}
+          onConfirm={handleToggleActive}
+          onCancel={() => setToToggle(null)}
+        />
       )}
     </div>
   );

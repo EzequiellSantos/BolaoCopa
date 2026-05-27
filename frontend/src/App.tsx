@@ -31,7 +31,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard"  element={<DashboardPage />} />
-          <Route path="/apostas"    element={<BetsPage />} />
+          <Route path="/palpites"    element={<BetsPage />} />
           <Route path="/ranking"    element={<RankingPage />} />
 
           <Route element={<ProtectedRoute requiredRole={UserRole.ADMIN} />}>

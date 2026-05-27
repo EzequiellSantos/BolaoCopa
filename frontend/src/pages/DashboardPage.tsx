@@ -39,9 +39,9 @@ export default function DashboardPage() {
       {/* Cards de ação rápida */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <QuickLink
-          to="/apostas"
+          to="/palpites"
           emoji="🎯"
-          label="Fazer Apostas"
+          label="Fazer Palpites"
           description="Palpite nos jogos abertos."
         />
         <QuickLink

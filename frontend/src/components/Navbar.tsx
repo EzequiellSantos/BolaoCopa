@@ -38,8 +38,8 @@ export default function Navbar() {
           <NavLink to="/dashboard" className={navLinkClass}>
             🏠 Início
           </NavLink>
-          <NavLink to="/apostas" className={navLinkClass}>
-            🎯 Apostas
+          <NavLink to="/palpites" className={navLinkClass}>
+            🎯 Palpites
           </NavLink>
           <NavLink to="/ranking" className={navLinkClass}>
             🏆 Ranking
@@ -94,7 +94,7 @@ export default function Navbar() {
       {menuOpen && (
         <div className="md:hidden border-t border-gray-800 bg-gray-950 px-4 py-3 flex flex-col gap-1">
           <NavLink to="/dashboard"     className={navLinkClass} onClick={() => setMenuOpen(false)}>🏠 Início</NavLink>
-          <NavLink to="/apostas"       className={navLinkClass} onClick={() => setMenuOpen(false)}>🎯 Apostas</NavLink>
+          <NavLink to="/palpites"       className={navLinkClass} onClick={() => setMenuOpen(false)}>🎯 Palpites</NavLink>
           <NavLink to="/ranking"       className={navLinkClass} onClick={() => setMenuOpen(false)}>🏆 Ranking</NavLink>
           {isAdmin && (
             <>

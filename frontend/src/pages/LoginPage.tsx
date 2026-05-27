@@ -71,7 +71,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-black tracking-tight text-white">
             Bolão <span className="text-brand-500">Copa</span>
           </h1>
-          <p className="text-gray-500 mt-1 text-sm">Faça login para apostar</p>
+          <p className="text-gray-500 mt-1 text-sm">Faça login e faça seu Palpite</p>
         </div>
 
         {/* Form card */}

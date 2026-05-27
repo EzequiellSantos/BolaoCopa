@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { AdminUpdateUserDto, UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorators';
@@ -55,19 +55,17 @@ export class UsersController {
   // PATCH /api/users/:id — ADMIN atualiza qualquer usuário
   @Patch(':id')
   @Roles(UserRole.ADMIN)
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+  update(@Param('id') id: string, @Body() dto: AdminUpdateUserDto) {
     return this.usersService.update(id, dto);
   }
 
-  // PATCH /api/users/me — usuário atualiza o próprio perfil (sem trocar role)
+  // PATCH /api/users/me — usuário atualiza o próprio perfil
   @Patch('me/profile')
   updateProfile(
     @CurrentUser() user: RequestUser,
     @Body() dto: UpdateUserDto,
   ) {
-    // Remove role do DTO para o usuário não conseguir se autopromover
-    const { role: _role, ...safeDto } = dto as any;
-    return this.usersService.update(user.userId, safeDto);
+    return this.usersService.update(user.userId, dto);
   }
 
   // DELETE /api/users/:id — apenas ADMIN desativa usuário (soft delete)

@@ -18,7 +18,7 @@ import { RequestUser } from '../auth/interfaces/request-user.interface';
 import { UserRole } from '../users/schemas/user.schema';
 
 @Controller('bets')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class BetsController {
   constructor(private readonly betsService: BetsService) {}
 
@@ -58,7 +58,6 @@ export class BetsController {
 
   // GET /api/bets/admin/all — ADMIN lista todas as apostas
   @Get('admin/all')
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   findAll() {
     return this.betsService.findAll();
@@ -66,7 +65,6 @@ export class BetsController {
 
   // GET /api/bets/admin/match/:matchId — ADMIN vê apostas de uma partida
   @Get('admin/match/:matchId')
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   findByMatch(@Param('matchId') matchId: string) {
     return this.betsService.findByMatch(matchId);

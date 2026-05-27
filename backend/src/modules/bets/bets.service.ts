@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Bet, BetDocument, BetResult } from './schemas/bet.schema';
 import { Match, MatchDocument, MatchStatus } from '../matches/schemas/match.schema';
 import { CreateBetDto } from './dto/create-bet.dto';
@@ -46,8 +46,8 @@ export class BetsService {
     }
 
     const bet = new this.betModel({
-      user: userId,
-      match: dto.matchId,
+      user: new Types.ObjectId(userId),
+      match: new Types.ObjectId(dto.matchId),
       homeScore: dto.homeScore,
       awayScore: dto.awayScore,
       result: BetResult.PENDING,

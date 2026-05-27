@@ -45,17 +45,30 @@ export class RankingService {
         },
       },
 
-      // 3. Popula os dados do usuário
+      // 3. Se o usuário estiver armazenado como string, converte para ObjectId
+      {
+        $addFields: {
+          userObjectId: {
+            $cond: [
+              { $eq: [{ $type: '$_id' }, 'string'] },
+              { $toObjectId: '$_id' },
+              '$_id',
+            ],
+          },
+        },
+      },
+
+      // 4. Popula os dados do usuário
       {
         $lookup: {
           from: 'users',
-          localField: '_id',
+          localField: 'userObjectId',
           foreignField: '_id',
           as: 'userInfo',
         },
       },
 
-      // 4. Desaninha o array userInfo
+      // 5. Desaninha o array userInfo
       {
         $unwind: '$userInfo',
       },

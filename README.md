@@ -66,7 +66,3 @@ Para gerar a versao de producao:
 ```bash
 npm run build
 ```
-
-## Observacao
-
-Este README fala principalmente do frontend, mas tambem apresenta o backend porque as duas partes trabalham juntas. O frontend e a porta de entrada para os usuarios, enquanto o backend guarda as regras, os dados e a seguranca do bolao.

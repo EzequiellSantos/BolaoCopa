@@ -38,7 +38,7 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
 
   const isOpen    = match.status === MatchStatus.OPEN;
   const hasBet    = !!existingBet;
-  const isDirty   = String(existingBet?.homeScore ?? '') !== homeScore || String(existingBet?.awayScore ?? '') !== awayScore;
+  const canEdit   = isOpen && !hasBet;
 
   const handleSave = async () => {
     const h = parseInt(homeScore);
@@ -46,13 +46,8 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
     if (isNaN(h) || isNaN(a) || h < 0 || a < 0) { setError('Preencha os placares corretamente.'); return; }
     setSaving(true); setError('');
     try {
-      if (hasBet && existingBet) {
-        await betsApi.update(existingBet._id, { homeScore: h, awayScore: a });
-        toast.success('Palpite atualizado!');
-      } else {
-        await betsApi.create({ matchId: match._id, homeScore: h, awayScore: a });
-        toast.success('Palpite registrado!');
-      }
+      await betsApi.create({ matchId: match._id, homeScore: h, awayScore: a });
+      toast.success('Palpite registrado!');
       onBetSaved();
     } catch (e) {
       const msg = getErrorMessage(e);
@@ -93,21 +88,24 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
         <div className="flex items-center gap-3">
           <div className="flex-1 text-center">
             <p className="text-xs text-gray-500 mb-1 truncate">{match.homeTeam}</p>
-            <input type="number" min={0} value={homeScore} onChange={e => setHomeScore(e.target.value)} disabled={!isOpen} className="input text-center text-2xl font-black py-3 disabled:opacity-50 disabled:cursor-not-allowed" placeholder="0" />
+                <input type="number" min={0} value={homeScore} onChange={e => setHomeScore(e.target.value)} disabled={!canEdit} className="input text-center text-2xl font-black py-3 disabled:opacity-50 disabled:cursor-not-allowed" placeholder="0" />
           </div>
           <span className="text-gray-600 font-light text-2xl mt-4">×</span>
           <div className="flex-1 text-center">
             <p className="text-xs text-gray-500 mb-1 truncate">{match.awayTeam}</p>
-            <input type="number" min={0} value={awayScore} onChange={e => setAwayScore(e.target.value)} disabled={!isOpen} className="input text-center text-2xl font-black py-3 disabled:opacity-50 disabled:cursor-not-allowed" placeholder="0" />
+                <input type="number" min={0} value={awayScore} onChange={e => setAwayScore(e.target.value)} disabled={!canEdit} className="input text-center text-2xl font-black py-3 disabled:opacity-50 disabled:cursor-not-allowed" placeholder="0" />
           </div>
         </div>
 
         {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
         {!isOpen && !existingBet && <p className="text-gray-600 text-xs mt-2">Esta partida não aceita mais palpites.</p>}
+        {isOpen && hasBet && (
+          <p className="text-brand-300 text-sm mt-2">Você já fez um palpite para este jogo: {existingBet?.homeScore} × {existingBet?.awayScore}. Não é possível alterar.</p>
+        )}
 
-        {isOpen && (
-          <button onClick={handleSave} disabled={saving || (hasBet && !isDirty)} className="btn-primary w-full mt-3 text-sm flex items-center justify-center gap-2">
-            {saving ? <><Spinner size="sm" /> Salvando...</> : hasBet ? isDirty ? 'Atualizar Palpite' : 'Palpite salvo ✓' : 'Registrar Palpites'}
+        {canEdit && (
+          <button onClick={handleSave} disabled={saving} className="btn-primary w-full mt-3 text-sm flex items-center justify-center gap-2">
+            {saving ? <><Spinner size="sm" /> Salvando...</> : 'Registrar Palpites'}
           </button>
         )}
       </div>

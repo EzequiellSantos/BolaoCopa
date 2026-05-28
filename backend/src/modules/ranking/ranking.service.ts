@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage } from 'mongoose';
 import { Bet, BetDocument, BetResult } from '../bets/schemas/bet.schema';
 import { User, UserDocument, UserRole } from '../users/schemas/user.schema';
+import { MatchDocument, MatchStatus } from '../matches/schemas/match.schema';
+import { calculateBetScore } from '../../common/utils/scoring.util';
 
 export interface RankingEntry {
   position: number;
@@ -24,6 +26,8 @@ export class RankingService {
   ) {}
 
   async getRanking(): Promise<RankingEntry[]> {
+    await this.settlePendingBetsFromFinishedMatches();
+
     const pipeline: PipelineStage[] = [
       // 1. Todos os usuários ativos e participantes
       {
@@ -119,6 +123,39 @@ export class RankingService {
 
     const results = await this.userModel.aggregate<Omit<RankingEntry, 'position'>>(pipeline);
     return this.addPositions(results);
+  }
+
+  private async settlePendingBetsFromFinishedMatches(): Promise<void> {
+    const pendingBets = await this.betModel
+      .find({ result: BetResult.PENDING })
+      .populate<{ match: MatchDocument }>('match')
+      .exec();
+
+    const updates = pendingBets
+      .map((bet) => {
+        const match = bet.match as MatchDocument | null;
+
+        if (
+          !match ||
+          match.status !== MatchStatus.FINISHED ||
+          match.homeScore === null ||
+          match.awayScore === null
+        ) {
+          return null;
+        }
+
+        const { result, points } = calculateBetScore({
+          betHomeScore: bet.homeScore,
+          betAwayScore: bet.awayScore,
+          actualHomeScore: match.homeScore,
+          actualAwayScore: match.awayScore,
+        });
+
+        return this.betModel.findByIdAndUpdate(bet._id, { result, points });
+      })
+      .filter(Boolean);
+
+    await Promise.all(updates);
   }
 
   // ─── Ranking de um usuário específico ────────────────────────────────

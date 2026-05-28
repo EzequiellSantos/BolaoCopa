@@ -199,6 +199,9 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
               placeholder="0"
             />
           </div>
+          {hasBet && (
+            <p className="text-brand-300 text-sm mt-3">Você já fez um palpite para este jogo. Não é possível alterar.</p>
+          )}
         </div>
 
         {error && <p className="text-red-400 text-sm mt-2">{error}</p>}

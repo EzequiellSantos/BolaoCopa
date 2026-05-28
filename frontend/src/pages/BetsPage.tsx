@@ -71,10 +71,10 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
   const inputsDisabled = !canCreate && !(canEditMode && isEditing);
 
   useEffect(() => {
-    if (!existingBet) return;
-    setHomeScore(String(existingBet.homeScore));
-    setAwayScore(String(existingBet.awayScore));
+    setHomeScore(String(existingBet?.homeScore ?? ''));
+    setAwayScore(String(existingBet?.awayScore ?? ''));
     setError('');
+    setIsEditing(false);
   }, [existingBet]);
 
   const handleSave = async () => {
@@ -168,9 +168,6 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
               placeholder="0"
             />
           </div>
-          {hasBet && (
-            <p className="text-brand-300 text-sm mt-3">Você já fez um palpite para este jogo. Não é possível alterar.</p>
-          )}
         </div>
 
         {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
@@ -201,7 +198,7 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
         )}
 
         {canCreate && (
-          <button onClick={handleCreate} disabled={saving} className="btn-primary w-full mt-3 text-sm flex items-center justify-center gap-2">
+          <button onClick={handleSave} disabled={saving} className="btn-primary w-full mt-3 text-sm flex items-center justify-center gap-2">
             {saving ? <><Spinner size="sm" /> Salvando...</> : 'Registrar Palpites'}
           </button>
         )}

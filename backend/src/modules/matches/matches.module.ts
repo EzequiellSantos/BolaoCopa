@@ -10,7 +10,6 @@ import { MatchSeedService } from './match-seed.service';
   imports: [
     MongooseModule.forFeature([
       { name: Match.name, schema: MatchSchema },
-      // BetSchema necessário para settleBets() calcular pontuações
       { name: Bet.name, schema: BetSchema },
     ]),
   ],

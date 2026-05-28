@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage } from 'mongoose';
 import { Bet, BetDocument, BetResult } from '../bets/schemas/bet.schema';
+import { User, UserDocument, UserRole } from '../users/schemas/user.schema';
 import { MatchDocument, MatchStatus } from '../matches/schemas/match.schema';
 import { calculateBetScore } from '../../common/utils/scoring.util';
 
@@ -11,120 +12,116 @@ export interface RankingEntry {
   name: string;
   email: string;
   totalPoints: number;
-  exactScores: number;   // quantidade de placares exatos (3 pts cada)
-  correctWinners: number; // quantidade de vencedores acertados (1 pt cada)
+  exactScores: number;
+  correctWinners: number;
   totalBets: number;
-  hitRate: number;        // % de apostas com algum ponto
+  hitRate: number;
 }
 
 @Injectable()
 export class RankingService {
   constructor(
     @InjectModel(Bet.name) private readonly betModel: Model<BetDocument>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
 
   async getRanking(): Promise<RankingEntry[]> {
     await this.settlePendingBetsFromFinishedMatches();
 
     const pipeline: PipelineStage[] = [
-      // 1. Apenas apostas já resolvidas (jogo finalizado)
+      // 1. Todos os usuários ativos e participantes
       {
-        $match: {
-          result: { $in: [BetResult.EXACT, BetResult.WINNER, BetResult.MISS] },
-        },
+        $match: { isActive: true, role: UserRole.USER },
       },
 
-      // 2. Agrupa por usuário somando pontos e contadores
-      {
-        $group: {
-          _id: '$user',
-          totalPoints: { $sum: '$points' },
-          exactScores: {
-            $sum: { $cond: [{ $eq: ['$result', BetResult.EXACT] }, 1, 0] },
-          },
-          correctWinners: {
-            $sum: { $cond: [{ $eq: ['$result', BetResult.WINNER] }, 1, 0] },
-          },
-          totalBets: { $sum: 1 },
-        },
-      },
-
-      // 3. Se o usuário estiver armazenado como string, converte para ObjectId
-      {
-        $addFields: {
-          userObjectId: {
-            $cond: [
-              { $eq: [{ $type: '$_id' }, 'string'] },
-              { $toObjectId: '$_id' },
-              '$_id',
-            ],
-          },
-        },
-      },
-
-      // 4. Popula os dados do usuário
+      // 2. LEFT JOIN com apostas resolvidas de cada usuário
       {
         $lookup: {
-          from: 'users',
-          localField: 'userObjectId',
-          foreignField: '_id',
-          as: 'userInfo',
+          from: 'bets',
+          let: { userId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$user', '$$userId'] },
+                result: { $in: [BetResult.EXACT, BetResult.WINNER, BetResult.MISS] },
+              },
+            },
+          ],
+          as: 'resolvedBets',
         },
       },
 
-      // 5. Desaninha o array userInfo
+      // 3. Calcula métricas (zero para quem não apostou ainda)
       {
-        $unwind: '$userInfo',
+        $addFields: {
+          totalPoints: { $sum: '$resolvedBets.points' },
+          exactScores: {
+            $size: {
+              $filter: {
+                input: '$resolvedBets',
+                cond: { $eq: ['$$this.result', BetResult.EXACT] },
+              },
+            },
+          },
+          correctWinners: {
+            $size: {
+              $filter: {
+                input: '$resolvedBets',
+                cond: { $eq: ['$$this.result', BetResult.WINNER] },
+              },
+            },
+          },
+          totalBets: { $size: '$resolvedBets' },
+        },
       },
 
-      // 5. Filtra apenas usuários ativos
-      {
-        $match: { 'userInfo.isActive': true },
-      },
-
-      // 6. Ordena: mais pontos primeiro; empate → mais placares exatos; empate → nome
+      // 4. Ordena: pontos → exatos → nome
       {
         $sort: {
           totalPoints: -1,
           exactScores: -1,
-          'userInfo.name': 1,
+          name: 1,
         },
       },
 
-      // 7. Projeta os campos finais
+      // 5. Projeta campos finais
       {
         $project: {
           _id: 0,
           userId: { $toString: '$_id' },
-          name: '$userInfo.name',
-          email: '$userInfo.email',
+          name: 1,
+          email: 1,
           totalPoints: 1,
           exactScores: 1,
           correctWinners: 1,
           totalBets: 1,
           hitRate: {
-            $round: [
+            $cond: [
+              { $eq: ['$totalBets', 0] },
+              0,
               {
-                $multiply: [
+                $round: [
                   {
-                    $divide: [
-                      { $add: ['$exactScores', '$correctWinners'] },
-                      '$totalBets',
+                    $multiply: [
+                      {
+                        $divide: [
+                          { $add: ['$exactScores', '$correctWinners'] },
+                          '$totalBets',
+                        ],
+                      },
+                      100,
                     ],
                   },
-                  100,
+                  1,
                 ],
               },
-              1,
             ],
           },
         },
       },
     ];
 
-    const results = await this.betModel.aggregate<Omit<RankingEntry, 'position'>>(pipeline);
-
-    // Adiciona posição numerada (respeitando empates)
+    const results = await this.userModel.aggregate<Omit<RankingEntry, 'position'>>(pipeline);
     return this.addPositions(results);
   }
 
@@ -174,20 +171,20 @@ export class RankingService {
 
   // ─── Adiciona posições com suporte a empate ───────────────────────────
   private addPositions(entries: Omit<RankingEntry, 'position'>[]): RankingEntry[] {
-    const result: RankingEntry[] = [];
+    let position = 1;
 
-    for (let i = 0; i < entries.length; i++) {
-      const tied =
-        i > 0 &&
-        entries[i].totalPoints === entries[i - 1].totalPoints &&
-        entries[i].exactScores === entries[i - 1].exactScores;
+    return entries.map((entry, index) => {
+      if (
+        index > 0 &&
+        entries[index].totalPoints === entries[index - 1].totalPoints &&
+        entries[index].exactScores === entries[index - 1].exactScores
+      ) {
+        return { ...entry, position: entries[index - 1]['position'] ?? position };
+      }
 
-      result.push({
-        ...entries[i],
-        position: tied ? result[i - 1].position : i + 1,
-      });
-    }
-
-    return result;
+      const current = { ...entry, position };
+      position = index + 2;
+      return current;
+    });
   }
 }

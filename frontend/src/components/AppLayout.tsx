@@ -9,7 +9,7 @@ export default function AppLayout() {
         <Outlet />
       </main>
       <footer className="border-t border-gray-800 py-4 text-center text-xs text-gray-700">
-        Ezequiel Santos / Kevin Lima Bolao Copa © {new Date().getFullYear()}
+        Ezequiel Santos / Kevin Lima  © {new Date().getFullYear()}
       </footer>
     </div>
   );

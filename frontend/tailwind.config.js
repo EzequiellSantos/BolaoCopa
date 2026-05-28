@@ -5,7 +5,7 @@ export default {
     extend: {
       colors: {
         brand: {
-          50:  '#f0fdf4',
+          50: '#f0fdf4',
           100: '#dcfce7',
           300: '#86efac',
           400: '#4ade80',
@@ -18,7 +18,7 @@ export default {
       },
       keyframes: {
         slideIn: {
-          '0%':   { opacity: '0', transform: 'translateX(2rem)' },
+          '0%': { opacity: '0', transform: 'translateX(2rem)' },
           '100%': { opacity: '1', transform: 'translateX(0)' },
         },
       },

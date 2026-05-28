@@ -229,7 +229,7 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
         )}
 
         {canCreate && (
-          <button onClick={handleSave} disabled={saving} className="btn-primary w-full mt-3 text-sm flex items-center justify-center gap-2">
+          <button onClick={handleCreate} disabled={saving} className="btn-primary w-full mt-3 text-sm flex items-center justify-center gap-2">
             {saving ? <><Spinner size="sm" /> Salvando...</> : 'Registrar Palpites'}
           </button>
         )}

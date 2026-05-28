@@ -18,6 +18,15 @@ export class BetsService {
     @InjectModel(Match.name) private readonly matchModel: Model<MatchDocument>,
   ) {}
 
+  private isDuplicateKeyError(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: number }).code === 11000
+    );
+  }
+
   // ─── Criar aposta ─────────────────────────────────────────────────────
   async create(userId: string, dto: CreateBetDto): Promise<BetDocument> {
     const match = await this.matchModel.findById(dto.matchId).lean();
@@ -34,9 +43,12 @@ export class BetsService {
     }
 
     // Regra: 1 aposta por usuário por partida
+    const userObjectId = new Types.ObjectId(userId);
+    const matchObjectId = new Types.ObjectId(dto.matchId);
+
     const existing = await this.betModel.findOne({
-      user: userId,
-      match: dto.matchId,
+      user: userObjectId,
+      match: matchObjectId,
     });
 
     if (existing) {
@@ -46,15 +58,25 @@ export class BetsService {
     }
 
     const bet = new this.betModel({
-      user: new Types.ObjectId(userId),
-      match: new Types.ObjectId(dto.matchId),
+      user: userObjectId,
+      match: matchObjectId,
       homeScore: dto.homeScore,
       awayScore: dto.awayScore,
       result: BetResult.PENDING,
       points: 0,
     });
 
-    return (await bet.save()).populate(['user', 'match']);
+    try {
+      return (await bet.save()).populate(['user', 'match']);
+    } catch (error) {
+      if (this.isDuplicateKeyError(error)) {
+        throw new ConflictException(
+          'Você já possui uma aposta para esta partida.',
+        );
+      }
+
+      throw error;
+    }
   }
 
   // ─── Editar aposta ────────────────────────────────────────────────────
@@ -94,11 +116,17 @@ export class BetsService {
 
   // ─── Minhas apostas ───────────────────────────────────────────────────
   async findMyBets(userId: string): Promise<BetDocument[]> {
-    return this.betModel
-      .find({ user: userId })
-      .populate('match')
+    const bets = await this.betModel
+      .find({ user: new Types.ObjectId(userId) })
       .sort({ createdAt: -1 })
       .lean();
+
+    return bets.map((bet) => ({
+      ...bet,
+      _id: String(bet._id),
+      user: String(bet.user),
+      match: String(bet.match),
+    })) as unknown as BetDocument[];
   }
 
   // ─── Aposta por ID ────────────────────────────────────────────────────

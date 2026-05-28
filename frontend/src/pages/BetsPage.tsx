@@ -23,6 +23,41 @@ function resultLabel(result: BetResult) {
   return map[result];
 }
 
+// Extrai a categoria do jogo a partir do campo description
+function extractCategory(match: Match): string {
+  if (!match.description) return 'Outros';
+  const m = match.description.match(/^Grupo ([A-L])/);
+  if (m) return m[1]; // 'A', 'B', ... 'L'
+  if (match.description.includes('Mata-mata'))      return 'Mata-mata';
+  if (match.description.includes('Oitavas'))        return 'Oitavas';
+  if (match.description.includes('Quartas'))        return 'Quartas';
+  if (match.description.includes('Semifinal'))      return 'Semis';
+  if (match.description.includes('3º Lugar'))       return '3º Lugar';
+  if (match.description.includes('Final'))          return 'Final';
+  return 'Outros';
+}
+
+const GROUP_LETTERS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+const PHASE_ORDER   = ['Mata-mata','Oitavas','Quartas','Semis','3º Lugar','Final','Outros'];
+
+function sortCategories(cats: string[]): string[] {
+  return [...cats].sort((a, b) => {
+    const ai = GROUP_LETTERS.indexOf(a);
+    const bi = GROUP_LETTERS.indexOf(b);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return PHASE_ORDER.indexOf(a) - PHASE_ORDER.indexOf(b);
+  });
+}
+
+function categoryLabel(cat: string): string {
+  if (GROUP_LETTERS.includes(cat)) return `Grupo ${cat}`;
+  return cat;
+}
+
+// ─── BetCard ──────────────────────────────────────────────────────────────────
+
 interface BetCardProps {
   match: Match;
   existingBet?: Bet;
@@ -173,14 +208,17 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
   );
 }
 
-type Tab = 'open' | 'all';
+// ─── BetsPage ─────────────────────────────────────────────────────────────────
+
+type MainTab = 'open' | 'all';
 
 export default function BetsPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [myBets, setMyBets]   = useState<Bet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
-  const [tab, setTab]         = useState<Tab>('open');
+  const [tab, setTab]         = useState<MainTab>('open');
+  const [category, setCategory] = useState<string>('all');
 
   const load = async () => {
     try {
@@ -201,25 +239,103 @@ export default function BetsPage() {
 
   const openMatches    = matches.filter(m => m.status === MatchStatus.OPEN);
   const nonOpenMatches = matches.filter(m => m.status !== MatchStatus.OPEN);
-  const displayed      = tab === 'open' ? openMatches : nonOpenMatches;
+  const baseMatches    = tab === 'open' ? openMatches : nonOpenMatches;
 
-  const tabCls = (t: Tab) =>
+  // Categorias disponíveis para o tab atual
+  const availableCategories = sortCategories([...new Set(baseMatches.map(extractCategory))]);
+
+  // Garante que a categoria selecionada ainda existe no tab atual
+  const activeCategory = availableCategories.includes(category) ? category : 'all';
+
+  const displayed = activeCategory === 'all'
+    ? baseMatches
+    : baseMatches.filter(m => extractCategory(m) === activeCategory);
+
+  const handleTabChange = (t: MainTab) => {
+    setTab(t);
+    setCategory('all');
+  };
+
+  // Conta palpites feitos na categoria ativa
+  const betsInView = displayed.filter(m => betByMatch(m._id)).length;
+
+  const mainTabCls = (t: MainTab) =>
     `px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === t ? 'bg-brand-600/20 text-brand-400' : 'text-gray-500 hover:text-white'}`;
 
+  const catBtnCls = (cat: string) => {
+    const active = activeCategory === cat;
+    return `px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
+      active
+        ? 'bg-brand-600 text-white shadow-sm'
+        : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+    }`;
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Cabeçalho */}
       <div>
         <h1 className="text-2xl font-black text-white">🎯 Palpites</h1>
-        <p className="text-gray-500 text-sm mt-1">{openMatches.length} jogo(s) aberto(s) · {myBets.length} palpite(s) registrado(s)</p>
+        <p className="text-gray-500 text-sm mt-1">
+          {openMatches.length} jogo(s) aberto(s) · {myBets.length} palpite(s) registrado(s)
+        </p>
       </div>
 
       {error && <ErrorBanner message={error} onRetry={load} />}
 
+      {/* Tabs principais */}
       <div className="flex gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1 w-fit">
-        <button className={tabCls('open')} onClick={() => setTab('open')}>🟢 Abertos ({openMatches.length})</button>
-        <button className={tabCls('all')}  onClick={() => setTab('all')}>📋 Encerrados ({nonOpenMatches.length})</button>
+        <button className={mainTabCls('open')} onClick={() => handleTabChange('open')}>
+          🟢 Abertos ({openMatches.length})
+        </button>
+        <button className={mainTabCls('all')} onClick={() => handleTabChange('all')}>
+          📋 Encerrados ({nonOpenMatches.length})
+        </button>
       </div>
 
+      {/* Filtro por grupo / fase */}
+      {!loading && availableCategories.length > 1 && (
+        <div className="space-y-2">
+          <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest">
+            {tab === 'open' ? 'Filtrar por grupo' : 'Filtrar por fase'}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button className={catBtnCls('all')} onClick={() => setCategory('all')}>
+              Todos ({baseMatches.length})
+            </button>
+            {availableCategories.map(cat => {
+              const count = baseMatches.filter(m => extractCategory(m) === cat).length;
+              const done  = baseMatches
+                .filter(m => extractCategory(m) === cat)
+                .filter(m => betByMatch(m._id)).length;
+              return (
+                <button key={cat} className={catBtnCls(cat)} onClick={() => setCategory(cat)}>
+                  {categoryLabel(cat)}
+                  {tab === 'open' && (
+                    <span className="ml-1 opacity-70">
+                      {done}/{count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Info da seleção atual */}
+      {!loading && activeCategory !== 'all' && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-white font-semibold">
+            {categoryLabel(activeCategory)}
+            <span className="text-gray-500 font-normal ml-2">
+              · {displayed.length} jogo(s){tab === 'open' ? ` · ${betsInView} palpite(s) feito(s)` : ''}
+            </span>
+          </p>
+        </div>
+      )}
+
+      {/* Grid de jogos */}
       {loading ? (
         <div className="flex justify-center py-20"><Spinner size="lg" /></div>
       ) : displayed.length === 0 ? (

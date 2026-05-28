@@ -137,21 +137,20 @@ export class RankingService {
 
   // ─── Adiciona posições com suporte a empate ───────────────────────────
   private addPositions(entries: Omit<RankingEntry, 'position'>[]): RankingEntry[] {
-    let position = 1;
+    const result: RankingEntry[] = [];
 
-    return entries.map((entry, index) => {
-      // Em caso de empate (mesmos pontos e exatos), mantém a posição anterior
-      if (
-        index > 0 &&
-        entries[index].totalPoints === entries[index - 1].totalPoints &&
-        entries[index].exactScores === entries[index - 1].exactScores
-      ) {
-        return { ...entry, position: entries[index - 1]['position'] ?? position };
-      }
+    for (let i = 0; i < entries.length; i++) {
+      const tied =
+        i > 0 &&
+        entries[i].totalPoints === entries[i - 1].totalPoints &&
+        entries[i].exactScores === entries[i - 1].exactScores;
 
-      const current = { ...entry, position };
-      position = index + 2; // próxima posição pula os empatados
-      return current;
-    });
+      result.push({
+        ...entries[i],
+        position: tied ? result[i - 1].position : i + 1,
+      });
+    }
+
+    return result;
   }
 }

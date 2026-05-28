@@ -112,7 +112,13 @@ export class BetsService {
       throw new NotFoundException('Aposta não encontrada');
     }
 
-    if (String(bet.user) !== userId) {
+    // Após populate, bet.user é um objeto; usamos _id para comparar com o userId
+    const betOwnerId =
+      bet.user && typeof bet.user === 'object' && '_id' in bet.user
+        ? String((bet.user as { _id: unknown })._id)
+        : String(bet.user);
+
+    if (betOwnerId !== userId) {
       throw new BadRequestException('Você não tem permissão para ver esta aposta');
     }
 

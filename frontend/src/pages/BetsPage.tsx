@@ -23,17 +23,41 @@ function resultLabel(result: BetResult) {
   return map[result];
 }
 
-// Extrai a categoria do jogo a partir do campo description
+function getEntityId(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    const entity = value as { _id?: unknown; id?: unknown; $oid?: unknown };
+    const id = entity._id ?? entity.id ?? entity.$oid;
+    if (typeof id === 'string') return id;
+    if (typeof id === 'object' && id !== null && '$oid' in id) {
+      const oid = (id as { $oid?: unknown }).$oid;
+      return typeof oid === 'string' ? oid : undefined;
+    }
+    if (typeof id === 'object' && id !== null && typeof (id as any).toString === 'function') {
+      const s = (id as any).toString();
+      return s === '[object Object]' ? undefined : s;
+    }
+    if (typeof (value as any).toString === 'function') {
+      const s = (value as any).toString();
+      return s === '[object Object]' ? undefined : s;
+    }
+  }
+  return undefined;
+}
+
+// ─── Lógica de categorias (grupos e fases) ────────────────────────────────────
+
 function extractCategory(match: Match): string {
   if (!match.description) return 'Outros';
   const m = match.description.match(/^Grupo ([A-L])/);
-  if (m) return m[1]; // 'A', 'B', ... 'L'
-  if (match.description.includes('Mata-mata'))      return 'Mata-mata';
-  if (match.description.includes('Oitavas'))        return 'Oitavas';
-  if (match.description.includes('Quartas'))        return 'Quartas';
-  if (match.description.includes('Semifinal'))      return 'Semis';
-  if (match.description.includes('3º Lugar'))       return '3º Lugar';
-  if (match.description.includes('Final'))          return 'Final';
+  if (m) return m[1];
+  if (match.description.includes('Mata-mata')) return 'Mata-mata';
+  if (match.description.includes('Oitavas'))   return 'Oitavas';
+  if (match.description.includes('Quartas'))   return 'Quartas';
+  if (match.description.includes('Semifinal')) return 'Semis';
+  if (match.description.includes('3º Lugar'))  return '3º Lugar';
+  if (match.description.includes('Final'))     return 'Final';
   return 'Outros';
 }
 
@@ -52,8 +76,7 @@ function sortCategories(cats: string[]): string[] {
 }
 
 function categoryLabel(cat: string): string {
-  if (GROUP_LETTERS.includes(cat)) return `Grupo ${cat}`;
-  return cat;
+  return GROUP_LETTERS.includes(cat) ? `Grupo ${cat}` : cat;
 }
 
 // ─── BetCard ──────────────────────────────────────────────────────────────────
@@ -77,6 +100,13 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
   const canCreate   = isOpen && !hasBet;
   const canEditMode = isOpen && hasBet;
   const inputsDisabled = !canCreate && !(canEditMode && isEditing);
+
+  useEffect(() => {
+    if (!existingBet) return;
+    setHomeScore(String(existingBet.homeScore));
+    setAwayScore(String(existingBet.awayScore));
+    setError('');
+  }, [existingBet]);
 
   const handleCreate = async () => {
     const h = parseInt(homeScore);
@@ -231,20 +261,17 @@ export default function BetsPage() {
 
   useEffect(() => { load(); }, []);
 
-  const betByMatch = (matchId: string) =>
-    myBets.find(b => {
-      const m = b.match as Match | string;
-      return typeof m === 'string' ? m === matchId : m._id === matchId;
-    });
+  const betByMatch = (matchId: unknown) => {
+    const id = getEntityId(matchId);
+    if (!id) return undefined;
+    return myBets.find(b => getEntityId(b.match) === id);
+  };
 
   const openMatches    = matches.filter(m => m.status === MatchStatus.OPEN);
   const nonOpenMatches = matches.filter(m => m.status !== MatchStatus.OPEN);
   const baseMatches    = tab === 'open' ? openMatches : nonOpenMatches;
 
-  // Categorias disponíveis para o tab atual
   const availableCategories = sortCategories([...new Set(baseMatches.map(extractCategory))]);
-
-  // Garante que a categoria selecionada ainda existe no tab atual
   const activeCategory = availableCategories.includes(category) ? category : 'all';
 
   const displayed = activeCategory === 'all'
@@ -255,9 +282,6 @@ export default function BetsPage() {
     setTab(t);
     setCategory('all');
   };
-
-  // Conta palpites feitos na categoria ativa
-  const betsInView = displayed.filter(m => betByMatch(m._id)).length;
 
   const mainTabCls = (t: MainTab) =>
     `px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === t ? 'bg-brand-600/20 text-brand-400' : 'text-gray-500 hover:text-white'}`;
@@ -273,7 +297,6 @@ export default function BetsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Cabeçalho */}
       <div>
         <h1 className="text-2xl font-black text-white">🎯 Palpites</h1>
         <p className="text-gray-500 text-sm mt-1">
@@ -312,9 +335,7 @@ export default function BetsPage() {
                 <button key={cat} className={catBtnCls(cat)} onClick={() => setCategory(cat)}>
                   {categoryLabel(cat)}
                   {tab === 'open' && (
-                    <span className="ml-1 opacity-70">
-                      {done}/{count}
-                    </span>
+                    <span className="ml-1 opacity-70">{done}/{count}</span>
                   )}
                 </button>
               );
@@ -325,14 +346,13 @@ export default function BetsPage() {
 
       {/* Info da seleção atual */}
       {!loading && activeCategory !== 'all' && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-white font-semibold">
-            {categoryLabel(activeCategory)}
-            <span className="text-gray-500 font-normal ml-2">
-              · {displayed.length} jogo(s){tab === 'open' ? ` · ${betsInView} palpite(s) feito(s)` : ''}
-            </span>
-          </p>
-        </div>
+        <p className="text-sm text-white font-semibold">
+          {categoryLabel(activeCategory)}
+          <span className="text-gray-500 font-normal ml-2">
+            · {displayed.length} jogo(s)
+            {tab === 'open' && ` · ${displayed.filter(m => betByMatch(m._id)).length} palpite(s) feito(s)`}
+          </span>
+        </p>
       )}
 
       {/* Grid de jogos */}

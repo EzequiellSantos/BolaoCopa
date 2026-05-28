@@ -23,6 +23,33 @@ function resultLabel(result: BetResult) {
   return map[result];
 }
 
+function getEntityId(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') return value;
+
+  if (typeof value === 'object') {
+    const entity = value as { _id?: unknown; id?: unknown; $oid?: unknown };
+    const id = entity._id ?? entity.id ?? entity.$oid;
+
+    if (typeof id === 'string') return id;
+    if (typeof id === 'object' && id !== null && '$oid' in id) {
+      const oid = (id as { $oid?: unknown }).$oid;
+      return typeof oid === 'string' ? oid : undefined;
+    }
+    if (typeof id === 'object' && id !== null && typeof id.toString === 'function') {
+      const idFromString = id.toString();
+      return idFromString === '[object Object]' ? undefined : idFromString;
+    }
+
+    if (typeof value.toString === 'function') {
+      const idFromString = value.toString();
+      return idFromString === '[object Object]' ? undefined : idFromString;
+    }
+  }
+
+  return undefined;
+}
+
 interface BetCardProps {
   match: Match;
   existingBet?: Bet;
@@ -39,6 +66,13 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
   const isOpen    = match.status === MatchStatus.OPEN;
   const hasBet    = !!existingBet;
   const canEdit   = isOpen && !hasBet;
+
+  useEffect(() => {
+    if (!existingBet) return;
+    setHomeScore(String(existingBet.homeScore));
+    setAwayScore(String(existingBet.awayScore));
+    setError('');
+  }, [existingBet]);
 
   const handleSave = async () => {
     const h = parseInt(homeScore);
@@ -85,24 +119,26 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
 
       <div className="border-t border-gray-800 pt-4">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Seu palpite</p>
-        <div className="flex items-center gap-3">
-          <div className="flex-1 text-center">
-            <p className="text-xs text-gray-500 mb-1 truncate">{match.homeTeam}</p>
-                <input type="number" min={0} value={homeScore} onChange={e => setHomeScore(e.target.value)} disabled={!canEdit} className="input text-center text-2xl font-black py-3 disabled:opacity-50 disabled:cursor-not-allowed" placeholder="0" />
+        <div className={hasBet ? 'rounded-lg border border-brand-800/60 bg-brand-950/20 px-4 py-3' : ''}>
+          {hasBet && <p className="text-xs font-semibold text-brand-300 mb-2">Palpite registrado</p>}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 text-center">
+              <p className="text-xs text-gray-500 mb-1 truncate">{match.homeTeam}</p>
+                  <input type="number" min={0} value={homeScore} onChange={e => setHomeScore(e.target.value)} disabled={!canEdit} className="input text-center text-2xl font-black py-3 disabled:opacity-80 disabled:cursor-not-allowed" placeholder="0" />
+            </div>
+            <span className="text-gray-600 font-light text-2xl mt-4">×</span>
+            <div className="flex-1 text-center">
+              <p className="text-xs text-gray-500 mb-1 truncate">{match.awayTeam}</p>
+                  <input type="number" min={0} value={awayScore} onChange={e => setAwayScore(e.target.value)} disabled={!canEdit} className="input text-center text-2xl font-black py-3 disabled:opacity-80 disabled:cursor-not-allowed" placeholder="0" />
+            </div>
           </div>
-          <span className="text-gray-600 font-light text-2xl mt-4">×</span>
-          <div className="flex-1 text-center">
-            <p className="text-xs text-gray-500 mb-1 truncate">{match.awayTeam}</p>
-                <input type="number" min={0} value={awayScore} onChange={e => setAwayScore(e.target.value)} disabled={!canEdit} className="input text-center text-2xl font-black py-3 disabled:opacity-50 disabled:cursor-not-allowed" placeholder="0" />
-          </div>
+          {hasBet && (
+            <p className="text-brand-300 text-sm mt-3">Você já fez um palpite para este jogo. Não é possível alterar.</p>
+          )}
         </div>
 
         {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
         {!isOpen && !existingBet && <p className="text-gray-600 text-xs mt-2">Esta partida não aceita mais palpites.</p>}
-        {isOpen && hasBet && (
-          <p className="text-brand-300 text-sm mt-2">Você já fez um palpite para este jogo: {existingBet?.homeScore} × {existingBet?.awayScore}. Não é possível alterar.</p>
-        )}
-
         {canEdit && (
           <button onClick={handleSave} disabled={saving} className="btn-primary w-full mt-3 text-sm flex items-center justify-center gap-2">
             {saving ? <><Spinner size="sm" /> Salvando...</> : 'Registrar Palpites'}
@@ -133,11 +169,13 @@ export default function BetsPage() {
 
   useEffect(() => { load(); }, []);
 
-  const betByMatch = (matchId: string) =>
-    myBets.find(b => {
-      const m = b.match as Match | string;
-      return typeof m === 'string' ? m === matchId : m._id === matchId;
-    });
+  const betByMatch = (matchId: unknown) => {
+    const currentMatchId = getEntityId(matchId);
+
+    if (!currentMatchId) return undefined;
+
+    return myBets.find(b => getEntityId(b.match) === currentMatchId);
+  };
 
   const openMatches    = matches.filter(m => m.status === MatchStatus.OPEN);
   const nonOpenMatches = matches.filter(m => m.status !== MatchStatus.OPEN);

@@ -23,6 +23,33 @@ function resultLabel(result: BetResult) {
   return map[result];
 }
 
+function getEntityId(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') return value;
+
+  if (typeof value === 'object') {
+    const entity = value as { _id?: unknown; id?: unknown; $oid?: unknown };
+    const id = entity._id ?? entity.id ?? entity.$oid;
+
+    if (typeof id === 'string') return id;
+    if (typeof id === 'object' && id !== null && '$oid' in id) {
+      const oid = (id as { $oid?: unknown }).$oid;
+      return typeof oid === 'string' ? oid : undefined;
+    }
+    if (typeof id === 'object' && id !== null && typeof id.toString === 'function') {
+      const idFromString = id.toString();
+      return idFromString === '[object Object]' ? undefined : idFromString;
+    }
+
+    if (typeof value.toString === 'function') {
+      const idFromString = value.toString();
+      return idFromString === '[object Object]' ? undefined : idFromString;
+    }
+  }
+
+  return undefined;
+}
+
 interface BetCardProps {
   match: Match;
   existingBet?: Bet;
@@ -43,7 +70,14 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
   const canEditMode = isOpen && hasBet;
   const inputsDisabled = !canCreate && !(canEditMode && isEditing);
 
-  const handleCreate = async () => {
+  useEffect(() => {
+    if (!existingBet) return;
+    setHomeScore(String(existingBet.homeScore));
+    setAwayScore(String(existingBet.awayScore));
+    setError('');
+  }, [existingBet]);
+
+  const handleSave = async () => {
     const h = parseInt(homeScore);
     const a = parseInt(awayScore);
     if (isNaN(h) || isNaN(a) || h < 0 || a < 0) { setError('Preencha os placares corretamente.'); return; }
@@ -134,6 +168,9 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
               placeholder="0"
             />
           </div>
+          {hasBet && (
+            <p className="text-brand-300 text-sm mt-3">Você já fez um palpite para este jogo. Não é possível alterar.</p>
+          )}
         </div>
 
         {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
@@ -193,11 +230,13 @@ export default function BetsPage() {
 
   useEffect(() => { load(); }, []);
 
-  const betByMatch = (matchId: string) =>
-    myBets.find(b => {
-      const m = b.match as Match | string;
-      return typeof m === 'string' ? m === matchId : m._id === matchId;
-    });
+  const betByMatch = (matchId: unknown) => {
+    const currentMatchId = getEntityId(matchId);
+
+    if (!currentMatchId) return undefined;
+
+    return myBets.find(b => getEntityId(b.match) === currentMatchId);
+  };
 
   const openMatches    = matches.filter(m => m.status === MatchStatus.OPEN);
   const nonOpenMatches = matches.filter(m => m.status !== MatchStatus.OPEN);

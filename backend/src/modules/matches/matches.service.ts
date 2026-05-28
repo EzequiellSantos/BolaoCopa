@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Match, MatchDocument, MatchStatus } from './schemas/match.schema';
 import { Bet, BetDocument } from '../bets/schemas/bet.schema';
 import { CreateMatchDto } from './dto/create-match.dto';
@@ -69,8 +69,16 @@ export class MatchesService {
     }
 
     // Se está finalizando, precisa dos placares e calcula pontuações
-    if (dto.status === MatchStatus.FINISHED) {
-      if (dto.homeScore === undefined || dto.awayScore === undefined) {
+    const shouldSettle =
+      dto.status === MatchStatus.FINISHED ||
+      (match.status === MatchStatus.FINISHED &&
+        (dto.homeScore !== undefined || dto.awayScore !== undefined));
+
+    if (shouldSettle) {
+      const homeScore = dto.homeScore ?? match.homeScore;
+      const awayScore = dto.awayScore ?? match.awayScore;
+
+      if (homeScore === undefined || homeScore === null || awayScore === undefined || awayScore === null) {
         throw new BadRequestException(
           'Placar obrigatório ao finalizar a partida',
         );
@@ -81,8 +89,8 @@ export class MatchesService {
           id,
           {
             status: MatchStatus.FINISHED,
-            homeScore: dto.homeScore,
-            awayScore: dto.awayScore,
+            homeScore,
+            awayScore,
             ...(dto.description && { description: dto.description }),
             ...(dto.stadium && { stadium: dto.stadium }),
           },
@@ -91,7 +99,7 @@ export class MatchesService {
         .lean();
 
       // Calcula pontuação de todas as apostas dessa partida
-      await this.settleBets(id, dto.homeScore, dto.awayScore);
+      await this.settleBets(id, homeScore, awayScore);
 
       return updated;
     }
@@ -145,7 +153,12 @@ export class MatchesService {
     actualHomeScore: number,
     actualAwayScore: number,
   ): Promise<void> {
-    const bets = await this.betModel.find({ match: matchId });
+    const matchFilters: unknown[] = [matchId];
+    if (Types.ObjectId.isValid(matchId)) {
+      matchFilters.push(new Types.ObjectId(matchId));
+    }
+
+    const bets = await this.betModel.find({ match: { $in: matchFilters } });
 
     const updates = bets.map((bet) => {
       const { result, points } = calculateBetScore({

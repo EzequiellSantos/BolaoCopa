@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none"><metadata><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"><rdf:Description><dc:creator>RealFaviconGenerator</dc:creator><dc:source>https://realfavicongenerator.net</dc:source></rdf:Description></rdf:RDF></metadata><defs>
+    <linearGradient id="bg" x1="64" y1="64" x2="448" y2="448" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14532D"></stop>
+      <stop offset="1" stop-color="#0F172A"></stop>
+    </linearGradient>
+
+    <linearGradient id="gold" x1="190" y1="80" x2="330" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#DCFCE7"></stop>
+      <stop offset="0.25" stop-color="#86EFAC"></stop>
+      <stop offset="0.6" stop-color="#22C55E"></stop>
+      <stop offset="1" stop-color="#15803D"></stop>
+    </linearGradient>
+
+    <linearGradient id="goldDark" x1="256" y1="140" x2="256" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4ADE80"></stop>
+      <stop offset="1" stop-color="#166534"></stop>
+    </linearGradient>
+
+    <filter id="shadow" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#000000" flood-opacity="0.35"></feDropShadow>
+    </filter>
+
+    <filter id="glow" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="16" result="blur"></feGaussianBlur>
+    </filter>
+  </defs><rect width="512" height="512" rx="120" fill="url(#bg)"></rect><circle cx="256" cy="220" r="120" fill="#22C55E" opacity="0.18" filter="url(#glow)"></circle><g filter="url(#shadow)">
+    
+    <!-- Handles -->
+    <path d="M156 150
+         C110 150 96 220 145 248
+         C168 262 188 255 200 240" stroke="#4ADE80" stroke-width="18" stroke-linecap="round"></path>
+
+    <path d="M356 150
+         C402 150 416 220 367 248
+         C344 262 324 255 312 240" stroke="#4ADE80" stroke-width="18" stroke-linecap="round"></path>
+
+    <!-- Cup -->
+    <path d="M180 110
+         H332
+         C332 205 304 255 256 282
+         C208 255 180 205 180 110Z" fill="url(#gold)"></path>
+
+    <!-- Cup shine -->
+    <path d="M220 120
+         C220 190 205 225 182 248" stroke="#F0FDF4" stroke-opacity="0.55" stroke-width="12" stroke-linecap="round"></path>
+
+    <!-- Football pattern -->
+    <polygon points="256,165 286,184 275,219 237,219 226,184" fill="#14532D" opacity="0.95"></polygon>
+
+    <path d="M226 184L198 205L208 240L237 219" fill="#166534"></path>
+
+    <path d="M286 184L314 205L304 240L275 219" fill="#166534"></path>
+
+    <path d="M237 219H275L286 255L256 278L226 255Z" fill="#15803D"></path>
+
+    <!-- Stem -->
+    <rect x="228" y="282" width="56" height="62" rx="18" fill="url(#goldDark)"></rect>
+
+    <!-- Base -->
+    <rect x="178" y="344" width="156" height="30" rx="15" fill="#22C55E"></rect>
+
+    <rect x="148" y="382" width="216" height="38" rx="19" fill="#166534"></rect>
+  </g></svg>

@@ -6,8 +6,10 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { User, UserDocument } from '../users/schemas/user.schema';
+import { User, UserDocument, UserRole } from '../users/schemas/user.schema';
+import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 export interface AuthResponse {
@@ -25,7 +27,17 @@ export class AuthService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
   ) {}
+
+  async register(dto: RegisterDto): Promise<AuthResponse> {
+    await this.usersService.create({
+      ...dto,
+      role: UserRole.USER,
+    });
+
+    return this.login({ email: dto.email, password: dto.password });
+  }
 
   async login(dto: LoginDto): Promise<AuthResponse> {
     // Busca com password explicitamente (select: false no schema)

@@ -171,6 +171,10 @@ const COPA_2026_MATCHES: MatchSeed[] = [
   { homeTeam: 'A Definir', awayTeam: 'A Definir', matchDate: '2026-07-19T19:00:00.000Z', description: 'Jogo 104 – Final',            stadium: 'Nova York',     status: MatchStatus.CLOSED },
 ];
 
+const MATCHES_TO_SEED = COPA_2026_MATCHES.filter(
+  (match) => match.homeTeam !== 'A Definir' && match.awayTeam !== 'A Definir',
+);
+
 @Injectable()
 export class MatchSeedService implements OnApplicationBootstrap {
   private readonly logger = new Logger(MatchSeedService.name);
@@ -185,7 +189,7 @@ export class MatchSeedService implements OnApplicationBootstrap {
       if (count > 0) return;
 
       await this.matchModel.insertMany(
-        COPA_2026_MATCHES.map((m) => ({
+        MATCHES_TO_SEED.map((m) => ({
           homeTeam: m.homeTeam,
           awayTeam: m.awayTeam,
           matchDate: new Date(m.matchDate),
@@ -197,7 +201,7 @@ export class MatchSeedService implements OnApplicationBootstrap {
         })),
       );
 
-      this.logger.log(`Copa 2026: ${COPA_2026_MATCHES.length} partidas cadastradas com sucesso.`);
+      this.logger.log(`Copa 2026: ${MATCHES_TO_SEED.length} partidas cadastradas com sucesso.`);
     } catch (err) {
       this.logger.error('Falha ao seed das partidas da Copa 2026', err);
     }

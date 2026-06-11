@@ -84,7 +84,7 @@ export default function LoginPage() {
             <span className="text-3xl">⚽</span>
           </div>
           <h1 className="text-3xl font-black tracking-tight text-white">
-            Bolão <span className="text-brand-500">Copa</span>
+            Bolão <span className="text-brand-500">Aziladuz</span>
           </h1>
           <p className="text-gray-500 mt-1 text-sm">
             {isRegistering ? 'Crie sua conta para participar' : 'Faça login e faça seu palpite'}

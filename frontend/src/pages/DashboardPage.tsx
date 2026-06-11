@@ -33,7 +33,7 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-black text-white">
           Olá, <span className="text-brand-500">{user?.name?.split(' ')[0]}</span> 👋
         </h1>
-        <p className="text-gray-500 mt-1">Bem-vindo ao Bolão Copa do Mundo.</p>
+        <p className="text-gray-500 mt-1">Bem-vindo ao Bolão Copa do Mundo Aziladuz.</p>
       </div>
 
       {/* Cards de ação rápida */}

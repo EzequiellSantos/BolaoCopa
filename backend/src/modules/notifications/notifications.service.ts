@@ -11,15 +11,26 @@ import { SubscribeDto } from './dto/subscribe.dto';
 
 @Injectable()
 export class NotificationsService implements OnModuleInit {
-  private readonly logger = new Logger(NotificationsService.name);
-  private vapidConfigured = false;
-  private publicKey = '';
-
   constructor(
     @InjectModel(PushSubscription.name)
     private readonly subscriptionModel: Model<PushSubscriptionDocument>,
     private readonly configService: ConfigService,
   ) {}
+
+  /** Busca subscrições pendentes */
+  async findAllPending() {
+    return this.subscriptionModel.find({ notificationSent: false }).exec();
+  }
+
+  /** Marca como enviada */
+  async markSent(id: string) {
+    return this.subscriptionModel.updateOne({ _id: id }, { $set: { notificationSent: true } }).exec();
+  }
+
+  private readonly logger = new Logger(NotificationsService.name);
+  private vapidConfigured = false;
+  private publicKey = '';
+
 
   onModuleInit() {
     const publicKey = this.configService.get<string>('VAPID_PUBLIC_KEY');

@@ -18,6 +18,17 @@ export class MatchesService {
     @InjectModel(Bet.name) private readonly betModel: Model<BetDocument>,
   ) {}
 
+  /**
+   * Busca partidas cujo horário está entre start e end.
+   * Utilizado pelo cron para notificar próximas partidas.
+   */
+  async findBetweenDates(start: Date, end: Date) {
+    return this.matchModel
+      .find({ matchDate: { $gte: start, $lte: end } })
+      .lean();
+  }
+
+
   // ─── Criar partida ────────────────────────────────────────────────────
   async create(dto: CreateMatchDto): Promise<MatchDocument> {
     const match = new this.matchModel({

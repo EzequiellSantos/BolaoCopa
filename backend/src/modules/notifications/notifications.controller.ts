@@ -8,6 +8,7 @@ import {
   Post,
   ServiceUnavailableException,
   UseGuards,
+  Logger,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { SubscribeDto } from './dto/subscribe.dto';
@@ -19,11 +20,23 @@ import { Roles } from '../../common/decorators/roles.decorators';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { RequestUser } from '../auth/interfaces/request-user.interface';
+import { Query, UnauthorizedException } from '@nestjs/common';
+import moment from 'moment-timezone';
+import { ConfigService } from '@nestjs/config';
+import { MatchesService } from '../matches/matches.service';
+import * as webpush from 'web-push';
 
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+
+  private readonly logger = new Logger(NotificationsController.name);
+
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly configService: ConfigService,
+    private readonly matchesService: MatchesService,
+  ) {}
 
   // GET /api/notifications/vapid-public-key — chave pública para o cliente inscrever-se
   @Get('vapid-public-key')
@@ -43,6 +56,62 @@ export class NotificationsController {
   @HttpCode(HttpStatus.OK)
   unsubscribe(@Body() dto: UnsubscribeDto) {
     return this.notificationsService.removeSubscription(dto.endpoint);
+  }
+
+  // -------------------------------------------------
+  //  Cron – executado a cada hora (0 * * * *)
+  // -------------------------------------------------
+  @Get('cron/send-match-notifications')
+  async sendMatchNotifications(@Query('secret') secret: string) {
+    // 1️⃣ proteção
+    const cronSecret = this.configService.get<string>('CRON_SECRET');
+    if (!cronSecret || secret !== cronSecret) {
+      throw new UnauthorizedException('Invalid cron secret');
+    }
+
+    // 2️⃣ janela de busca (20‑80 min a partir de agora)
+    const now = new Date();
+    const start = new Date(now.getTime() + 20 * 60_000);
+    const end = new Date(now.getTime() + 80 * 60_000);
+
+    // 3️⃣ buscar partidas próximas
+    const matches = await this.matchesService.findBetweenDates(start, end);
+
+    if (!matches?.length) {
+      this.logger.log('Nenhuma partida na janela de notificação.');
+      return { sent: 0 };
+    }
+
+    // 4️⃣ buscar subscrições ainda não notificadas
+    const subscriptions = await this.notificationsService.findAllPending();
+
+    let sent = 0;
+    for (const match of matches) {
+      const title = '⚽ Jogo começando em breve';
+      const body = `${match.homeTeam} x ${match.awayTeam} começa em 20 minutos`;
+      const localDate = moment(match.matchDate)
+        .tz('America/Sao_Paulo')
+        .format('DD/MM HH:mm');
+      const payload = JSON.stringify({ title, body, matchDate: localDate });
+
+      for (const sub of subscriptions) {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth },
+            },
+            payload,
+          );
+          await this.notificationsService.markSent(sub._id);
+          sent++;
+        } catch (e: any) {
+          this.logger.error(`Falha ao enviar push para ${sub.endpoint}: ${e.message}`);
+        }
+      }
+    }
+    this.logger.log(`Notificações enviadas: ${sent}`);
+    return { sent };
   }
 
   // POST /api/notifications/broadcast — apenas ADMIN envia notificação a todos

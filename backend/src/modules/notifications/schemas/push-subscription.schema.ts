@@ -19,6 +19,8 @@ const PushKeysSchema = SchemaFactory.createForClass(PushKeys);
   collection: 'pushsubscriptions',
 })
 export class PushSubscription {
+  @Prop({ default: false })
+  notificationSent: boolean;
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   user: Types.ObjectId;
 

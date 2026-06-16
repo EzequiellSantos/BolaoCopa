@@ -37,7 +37,8 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
 // Pede permissão, registra a inscrição no PushManager e envia ao backend.
 // Lança Error com mensagem amigável em caso de falha.
-export async function subscribeToPush(): Promise<void> {
+export async function subscribeToPush(): Promise<void> { // existing implementation unchanged
+  // existing implementation (unchanged)
   console.log('[push] subscribeToPush: início', {
     supported: isPushSupported(),
     permission: getPermissionState(),

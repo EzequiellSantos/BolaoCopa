@@ -6,11 +6,16 @@ import {
 } from './schemas/push-subscription.schema';
 import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
+import { MatchesModule } from '../matches/matches.module';
 
 @Module({
   imports: [
+    MatchesModule,
     MongooseModule.forFeature([
-      { name: PushSubscription.name, schema: PushSubscriptionSchema },
+      {
+        name: PushSubscription.name,
+        schema: PushSubscriptionSchema
+      },
     ]),
   ],
   controllers: [NotificationsController],

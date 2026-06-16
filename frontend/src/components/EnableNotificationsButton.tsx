@@ -4,6 +4,7 @@ import {
   getPermissionState,
   isPushEnabled,
   subscribeToPush,
+  unsubscribeFromPush, // 1. Importa a nova função de cancelamento
 } from '../api/push';
 import { getErrorMessage } from '../api/axios';
 import { useToast } from '../contexts/ToastContext';
@@ -12,13 +13,13 @@ interface Props {
   className?: string;
 }
 
-// Botão para o usuário ativar o recebimento de notificações push.
 export default function EnableNotificationsButton({ className = '' }: Props) {
   const toast = useToast();
   const [supported] = useState(isPushSupported());
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Verifica se já está ativo ao carregar a página
   useEffect(() => {
     if (supported) {
       isPushEnabled().then(setEnabled).catch(() => setEnabled(false));
@@ -27,38 +28,65 @@ export default function EnableNotificationsButton({ className = '' }: Props) {
 
   if (!supported) return null;
 
-  const handleClick = async () => {
+  // Função única que gerencia Ativar / Desativar
+  const handleToggleNotifications = async () => {
     setLoading(true);
     try {
-      await subscribeToPush();
-      setEnabled(true);
-      toast.success('Notificações ativadas! Você receberá os avisos do bolão.');
+      if (enabled) {
+        // Se já está ativo, desativa
+        await unsubscribeFromPush();
+        setEnabled(false);
+        toast.success('Notificações desativadas com sucesso.');
+      } else {
+        // Se está inativo, ativa
+        await subscribeToPush();
+        setEnabled(true);
+        toast.success('Notificações ativadas! Você receberá os avisos do bolão.');
+      }
     } catch (e) {
-      console.error('[push] handleClick: falha ao ativar notificações', e);
-      toast.error(getErrorMessage(e) || (e instanceof Error ? e.message : 'Não foi possível ativar.'));
+      console.error('[push] handleToggleNotifications: falha na operação', e);
+      toast.error(
+        getErrorMessage(e) || 
+        (e instanceof Error ? e.message : 'Não foi possível alterar a configuração.')
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  if (enabled) {
+  const denied = getPermissionState() === 'denied';
+
+  // Renderização se as notificações estiverem BLOQUEADAS no navegador
+  if (denied) {
     return (
-      <span className={`flex items-center gap-2 text-xs text-brand-400 ${className}`}>
-        🔔 Notificações ativas
-      </span>
+      <button
+        disabled
+        title="Permissão bloqueada — habilite nas configurações do navegador"
+        className={`btn-secondary text-xs px-3 py-1.5 opacity-60 cursor-not-allowed ${className}`}
+      >
+        🔕 Bloqueadas no navegador
+      </button>
     );
   }
 
-  const denied = getPermissionState() === 'denied';
-
+  // Renderização do botão dinâmico (Ativar / Desativar)
   return (
     <button
-      onClick={handleClick}
-      disabled={loading || denied}
-      title={denied ? 'Permissão bloqueada — habilite nas configurações do navegador' : undefined}
-      className={`btn-secondary text-xs px-3 py-1.5 ${className}`}
+      onClick={handleToggleNotifications}
+      disabled={loading}
+      className={`text-xs px-3 py-1.5 rounded transition-colors ${
+        enabled 
+          ? `bg-brand-500/10 text-brand-400 border border-brand-500/30 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 ${className}` 
+          : `btn-secondary ${className}`
+      }`}
     >
-      {loading ? 'Ativando...' : denied ? '🔕 Bloqueadas' : '🔔 Ativar notificações'}
+      {loading ? (
+        enabled ? 'Desativando...' : 'Ativando...'
+      ) : enabled ? (
+        '🔔 Notificações ativas (Clique para desativar)'
+      ) : (
+        '🔔 Ativar notificações'
+      )}
     </button>
   );
 }

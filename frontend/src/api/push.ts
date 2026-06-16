@@ -37,8 +37,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
 // Pede permissão, registra a inscrição no PushManager e envia ao backend.
 // Lança Error com mensagem amigável em caso de falha.
-export async function subscribeToPush(): Promise<void> { // existing implementation unchanged
-  // existing implementation (unchanged)
+export async function subscribeToPush(): Promise<void> {
   console.log('[push] subscribeToPush: início', {
     supported: isPushSupported(),
     permission: getPermissionState(),
@@ -111,5 +110,47 @@ export async function subscribeToPush(): Promise<void> { // existing implementat
   } catch (e) {
     console.error('[push] erro ao enviar subscription ao backend /notifications/subscribe', e);
     throw e;
+  }
+}
+
+// Cancela a inscrição push atual no navegador e remove do backend.
+export async function unsubscribeFromPush(): Promise<void> {
+  console.log('[push] unsubscribeFromPush: início');
+
+  if (!isPushSupported()) {
+    console.error('[push] navegador não suporta push');
+    return;
+  }
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const subscription = await reg.pushManager.getSubscription();
+
+    if (subscription) {
+      // Guarda os dados atuais da inscrição para conseguir identificar e remover no backend
+      const subscriptionJson = subscription.toJSON();
+
+      // Cancela a inscrição no navegador
+      const deactivated = await subscription.unsubscribe();
+      console.log('[push] subscription.unsubscribe no navegador ->', deactivated);
+
+    if (deactivated) {
+      // 1. Verifica se o endpoint realmente existe
+      if (!subscriptionJson.endpoint) {
+        throw new Error('Não foi possível localizar o endereço de inscrição para cancelar.');
+      }
+
+      // 2. Agora o TypeScript sabe que é 100% uma string
+      await notificationsApi.unsubscribe(subscriptionJson.endpoint);
+      console.log('[push] inscrição removida do backend com sucesso');
+    }
+    } else {
+      console.log('[push] nenhuma inscrição ativa encontrada para cancelar.');
+    }
+  } catch (e) {
+    console.error('[push] erro ao cancelar a inscrição de notificações', e);
+    throw new Error(
+      'Não foi possível cancelar as notificações. Tente novamente mais tarde.',
+    );
   }
 }

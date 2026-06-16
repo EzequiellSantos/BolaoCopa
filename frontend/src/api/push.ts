@@ -1,0 +1,67 @@
+import { notificationsApi } from './services';
+
+// Indica se o navegador suporta notificações push.
+export function isPushSupported(): boolean {
+  return (
+    'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    'Notification' in window
+  );
+}
+
+// Estado atual da permissão de notificação ('default' | 'granted' | 'denied').
+export function getPermissionState(): NotificationPermission {
+  if (!('Notification' in window)) return 'denied';
+  return Notification.permission;
+}
+
+// Já existe uma inscrição push ativa para este navegador?
+export async function isPushEnabled(): Promise<boolean> {
+  if (!isPushSupported()) return false;
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  return !!sub;
+}
+
+// Converte a chave VAPID base64url para o Uint8Array exigido pelo PushManager.
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i += 1) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Pede permissão, registra a inscrição no PushManager e envia ao backend.
+// Lança Error com mensagem amigável em caso de falha.
+export async function subscribeToPush(): Promise<void> {
+  if (!isPushSupported()) {
+    throw new Error('Seu navegador não suporta notificações push.');
+  }
+
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    throw new Error(
+      'Permissão de notificações negada. Habilite nas configurações do navegador.',
+    );
+  }
+
+  const publicKey = await notificationsApi.getVapidKey();
+  if (!publicKey) {
+    throw new Error('Notificações não estão configuradas no servidor.');
+  }
+
+  const reg = await navigator.serviceWorker.ready;
+  let subscription = await reg.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
+    });
+  }
+
+  await notificationsApi.subscribe(subscription.toJSON());
+}

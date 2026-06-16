@@ -92,6 +92,21 @@ export const betsApi = {
     api.get<Bet[]>(`/bets/admin/match/${matchId}`).then(r => r.data),
 };
 
+// ─── Notifications (push) ──────────────────────────────────────────────────────
+export const notificationsApi = {
+  getVapidKey: () =>
+    api.get<{ publicKey: string }>('/notifications/vapid-public-key').then(r => r.data.publicKey),
+
+  subscribe: (subscription: PushSubscriptionJSON) =>
+    api.post('/notifications/subscribe', subscription).then(r => r.data),
+
+  unsubscribe: (endpoint: string) =>
+    api.delete('/notifications/subscribe', { data: { endpoint } }).then(r => r.data),
+
+  broadcast: (title: string, body: string) =>
+    api.post<{ sent: number; failed: number; total: number }>('/notifications/broadcast', { title, body }).then(r => r.data),
+};
+
 // ─── Ranking ──────────────────────────────────────────────────────────────────
 export const rankingApi = {
   list: () =>

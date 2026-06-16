@@ -10,6 +10,7 @@ import BetsPage          from './pages/BetsPage';
 import RankingPage       from './pages/RankingPage';
 import AdminUsersPage    from './pages/AdminUsersPage';
 import AdminMatchesPage  from './pages/AdminMatchesPage';
+import AdminNotificationsPage from './pages/AdminNotificationsPage';
 import NotFoundPage      from './pages/NotFoundPage';
 
 function LoadingScreen() {
@@ -37,6 +38,7 @@ export default function App() {
           <Route element={<ProtectedRoute requiredRole={UserRole.ADMIN} />}>
             <Route path="/admin/partidas"  element={<AdminMatchesPage />} />
             <Route path="/admin/usuarios"  element={<AdminUsersPage />} />
+            <Route path="/admin/notificacoes" element={<AdminNotificationsPage />} />
           </Route>
         </Route>
       </Route>

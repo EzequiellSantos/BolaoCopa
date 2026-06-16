@@ -34,6 +34,7 @@ export default function EnableNotificationsButton({ className = '' }: Props) {
       setEnabled(true);
       toast.success('Notificações ativadas! Você receberá os avisos do bolão.');
     } catch (e) {
+      console.error('[push] handleClick: falha ao ativar notificações', e);
       toast.error(getErrorMessage(e) || (e instanceof Error ? e.message : 'Não foi possível ativar.'));
     } finally {
       setLoading(false);

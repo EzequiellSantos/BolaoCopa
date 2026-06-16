@@ -38,30 +38,77 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 // Pede permissão, registra a inscrição no PushManager e envia ao backend.
 // Lança Error com mensagem amigável em caso de falha.
 export async function subscribeToPush(): Promise<void> {
+  console.log('[push] subscribeToPush: início', {
+    supported: isPushSupported(),
+    permission: getPermissionState(),
+    swInNavigator: 'serviceWorker' in navigator,
+    pushManagerInWindow: 'PushManager' in window,
+    notificationInWindow: 'Notification' in window,
+    isSecureContext: window.isSecureContext,
+  });
+
   if (!isPushSupported()) {
+    console.error('[push] navegador não suporta push (serviceWorker/PushManager/Notification)');
     throw new Error('Seu navegador não suporta notificações push.');
   }
 
-  const permission = await Notification.requestPermission();
+  let permission: NotificationPermission;
+  try {
+    permission = await Notification.requestPermission();
+    console.log('[push] Notification.requestPermission ->', permission);
+  } catch (e) {
+    console.error('[push] erro em Notification.requestPermission', e);
+    throw e;
+  }
   if (permission !== 'granted') {
+    console.error('[push] permissão não concedida:', permission);
     throw new Error(
       'Permissão de notificações negada. Habilite nas configurações do navegador.',
     );
   }
 
-  const publicKey = await notificationsApi.getVapidKey();
+  let publicKey: string;
+  try {
+    publicKey = await notificationsApi.getVapidKey();
+    console.log('[push] getVapidKey ->', publicKey ? `presente (len=${publicKey.length})` : 'ausente/vazio');
+  } catch (e) {
+    console.error('[push] erro ao buscar VAPID public key no backend', e);
+    throw e;
+  }
   if (!publicKey) {
+    console.error('[push] VAPID public key ausente — backend sem VAPID configurado');
     throw new Error('Notificações não estão configuradas no servidor.');
   }
 
-  const reg = await navigator.serviceWorker.ready;
-  let subscription = await reg.pushManager.getSubscription();
-  if (!subscription) {
-    subscription = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
-    });
+  let reg: ServiceWorkerRegistration;
+  try {
+    reg = await navigator.serviceWorker.ready;
+    console.log('[push] serviceWorker.ready ok', { scope: reg.scope, active: !!reg.active });
+  } catch (e) {
+    console.error('[push] erro em navigator.serviceWorker.ready (sw.js não registrado?)', e);
+    throw e;
   }
 
-  await notificationsApi.subscribe(subscription.toJSON());
+  let subscription = await reg.pushManager.getSubscription();
+  console.log('[push] subscription existente?', !!subscription);
+  if (!subscription) {
+    try {
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
+      });
+      console.log('[push] pushManager.subscribe ok', { endpoint: subscription.endpoint });
+    } catch (e) {
+      console.error('[push] erro em pushManager.subscribe (chave VAPID inválida / applicationServerKey?)', e);
+      throw e;
+    }
+  }
+
+  try {
+    await notificationsApi.subscribe(subscription.toJSON());
+    console.log('[push] subscription enviada ao backend com sucesso');
+  } catch (e) {
+    console.error('[push] erro ao enviar subscription ao backend /notifications/subscribe', e);
+    throw e;
+  }
 }

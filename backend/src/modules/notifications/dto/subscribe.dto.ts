@@ -4,6 +4,7 @@ import {
   IsObject,
   IsString,
   ValidateNested,
+  IsOptional,
 } from 'class-validator';
 
 class SubscriptionKeysDto {
@@ -17,6 +18,8 @@ class SubscriptionKeysDto {
 }
 
 export class SubscribeDto {
+  @IsOptional()
+  expirationTime?: number | null;
   @IsString()
   @IsNotEmpty({ message: 'endpoint é obrigatório' })
   endpoint: string;

@@ -8,6 +8,7 @@ import {
   PushSubscriptionDocument,
 } from './schemas/push-subscription.schema';
 import { SubscribeDto } from './dto/subscribe.dto';
+import moment from 'moment-timezone';
 
 @Injectable()
 export class NotificationsService implements OnModuleInit {
@@ -77,6 +78,67 @@ export class NotificationsService implements OnModuleInit {
   async removeSubscription(endpoint: string) {
     await this.subscriptionModel.deleteOne({ endpoint });
     return { success: true };
+  }
+
+  /**
+   * Envia notificações de "jogo começando em breve" para as inscrições
+   * ainda não notificadas, para cada partida recebida.
+   * Marca a inscrição como notificada após o primeiro envio bem-sucedido
+   * e remove inscrições expiradas (404/410).
+   */
+  async sendMatchNotifications(matches: { homeTeam: string; awayTeam: string; matchDate: Date; _id: any }[]): Promise<number> {
+    if (!this.vapidConfigured) {
+      this.logger.warn('Tentativa de notificar partidas sem VAPID configurado');
+      return 0;
+    }
+
+    const subscriptions = await this.findAllPending();
+    if (subscriptions.length === 0) return 0;
+
+    let sent = 0;
+    const expiredEndpoints: string[] = [];
+
+    for (const match of matches) {
+      const localDate = moment(match.matchDate)
+        .tz('America/Sao_Paulo')
+        .format('DD/MM HH:mm');
+
+      const payload = JSON.stringify({
+        title: '⚽ Jogo começando em breve',
+        body: `${match.homeTeam} x ${match.awayTeam} começa em 20 minutos`,
+        matchDate: localDate,
+      });
+
+      for (const sub of subscriptions) {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth },
+            },
+            payload,
+          );
+          await this.markSent(String(sub._id));
+          sent++;
+        } catch (err: any) {
+          if (err?.statusCode === 404 || err?.statusCode === 410) {
+            expiredEndpoints.push(sub.endpoint);
+          } else {
+            this.logger.error(`Falha ao enviar push para ${sub.endpoint}: ${err?.message}`);
+          }
+        }
+      }
+    }
+
+    if (expiredEndpoints.length > 0) {
+      await this.subscriptionModel.deleteMany({ endpoint: { $in: expiredEndpoints } });
+    }
+
+    return sent;
+  }
+
+  async resetNotificationFlags(): Promise<void> {
+    await this.subscriptionModel.updateMany({}, { notificationSent: false });
   }
 
   // Envia uma notificação para todos os inscritos. Remove inscrições expiradas.

@@ -86,7 +86,9 @@ export class NotificationsService implements OnModuleInit {
    * Marca a inscrição como notificada após o primeiro envio bem-sucedido
    * e remove inscrições expiradas (404/410).
    */
-  async sendMatchNotifications(matches: { homeTeam: string; awayTeam: string; matchDate: Date; _id: any }[]): Promise<number> {
+  async sendMatchNotifications(
+    matches: { homeTeam: string; awayTeam: string; matchDate: Date; _id: any }[],
+  ): Promise<number> {
     if (!this.vapidConfigured) {
       this.logger.warn('Tentativa de notificar partidas sem VAPID configurado');
       return 0;
@@ -99,13 +101,17 @@ export class NotificationsService implements OnModuleInit {
     const expiredEndpoints: string[] = [];
 
     for (const match of matches) {
+      const minutesUntilKickoff = Math.round(
+        (new Date(match.matchDate).getTime() - Date.now()) / 60_000,
+      );
+
       const localDate = moment(match.matchDate)
         .tz('America/Sao_Paulo')
         .format('DD/MM HH:mm');
 
       const payload = JSON.stringify({
         title: '⚽ Jogo começando em breve',
-        body: `${match.homeTeam} x ${match.awayTeam} começando em breve`,
+        body: `${match.homeTeam} x ${match.awayTeam} começa em ${minutesUntilKickoff} minutos`,
         matchDate: localDate,
       });
 

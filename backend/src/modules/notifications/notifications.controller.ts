@@ -82,8 +82,8 @@ export class NotificationsController {
     }
 
     const now = new Date();
-    const start = new Date(now.getTime() + 20 * 60_000);
-    const end = new Date(now.getTime() + 80 * 60_000);
+    const start = new Date(now.getTime() + 15 * 60_000);
+    const end   = new Date(now.getTime() + 35 * 60_000);
 
     const matches = await this.matchesService.findBetweenDates(start, end);
 

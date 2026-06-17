@@ -70,6 +70,7 @@ export class NotificationsController {
     // 1️⃣ proteção
     const cronSecret = this.configService.get<string>('CRON_SECRET');
     if (!cronSecret || !authHeader || authHeader.replace('Bearer ', '') !== cronSecret) {
+      this.logger.warn('Invalid cron secret. Verify that CRON_SECRET env var matches the Authorization Bearer token and that the request origin is allowed in FRONTEND_URLS.');
       throw new UnauthorizedException('Invalid cron secret');
     }
 

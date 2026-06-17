@@ -20,7 +20,7 @@ import { Roles } from '../../common/decorators/roles.decorators';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { RequestUser } from '../auth/interfaces/request-user.interface';
-import { UnauthorizedException, Headers } from '@nestjs/common';
+import { Query, UnauthorizedException } from '@nestjs/common';
 import moment from 'moment-timezone';
 import { ConfigService } from '@nestjs/config';
 import { MatchesService } from '../matches/matches.service';

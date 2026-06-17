@@ -63,6 +63,7 @@ export class NotificationsController {
   // -------------------------------------------------
   @Get('cron/send-match-notifications')
   async sendMatchNotifications(@Query('secret') secret: string) {
+    this.logger.log('Cron job started: sendMatchNotifications');
     // 1️⃣ proteção
     const cronSecret = this.configService.get<string>('CRON_SECRET');
     if (!cronSecret || secret !== cronSecret) {

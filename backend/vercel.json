@@ -11,5 +11,11 @@
       "src": "/(.*)",
       "dest": "api/index.ts"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/notifications/cron/send-match-notifications",
+      "schedule": "*/10 * * * *"
+    }
   ]
 }

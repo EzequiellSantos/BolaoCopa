@@ -11,7 +11,7 @@ function getAllowedOrigins(): string[] {
   return rawOrigins
     .split(',')
     .map(normalizeOrigin)
-    .filter(Boolean);
+    .filter(origin => origin && origin !== 'https://bolaoaziladuz-api.vercel.app');
 }
 
 export function setupApp(app: INestApplication) {

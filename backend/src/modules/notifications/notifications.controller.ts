@@ -64,11 +64,11 @@ export class NotificationsController {
   // -------------------------------------------------
   @Get('cron/send-match-notifications')
   async sendMatchNotifications(@Query('secret') secret: string) {
-    this.logger.log('CRON START');
+    console.log('[CRON] request received');
     // 1️⃣ proteção via query secret
     const cronSecret = process.env.CRON_SECRET;
     const secretValid = secret && cronSecret && secret === cronSecret;
-    this.logger.log({ secretValid });
+    console.log('[CRON] secret validated');
     if (!secretValid) {
       this.logger.warn('Invalid cron secret via query parameter');
       throw new UnauthorizedException('Invalid cron secret');
@@ -81,22 +81,20 @@ export class NotificationsController {
 
     // 3️⃣ buscar partidas próximas
     const matches = await this.matchesService.findBetweenDates(start, end);
-    this.logger.log({ matchesFound: matches?.length ?? 0 });
+    console.log('[CRON] processing');
     if (!matches?.length) {
-      this.logger.log('Nenhuma partida na janela de notificação.');
-      this.logger.log('CRON FINISHED');
+      console.log('[CRON] finished');
       return { sent: 0 };
     }
 
     // 4️⃣ enviar notificações (mantém lógica original)
     try {
       const sent = await this.notificationsService.sendMatchNotifications(matches);
-      this.logger.log({ notificationsSent: sent });
-      this.logger.log('CRON FINISHED');
+      console.log('[CRON] finished');
       return { sent };
     } catch (error) {
-      this.logger.error('Error sending notifications', error);
-      this.logger.log('CRON FINISHED');
+      console.error('[CRON] failed', error);
+      console.log('[CRON] finished');
       throw error;
     }
     // 4️⃣ buscar subscrições ainda não notificadas

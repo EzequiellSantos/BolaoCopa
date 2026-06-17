@@ -65,7 +65,7 @@ export class NotificationsController {
   //  Cron – executado a cada hora (0 * * * *)
   // -------------------------------------------------
   @Get('cron/send-match-notifications')
-  async sendMatchNotifications(@Headers('authorization') authHeader: string) {
+  async sendMatchNotifications(@Query('secret') secret: string) {
     this.logger.log('Cron job started: sendMatchNotifications');
     // 1️⃣ proteção
     const cronSecret = this.configService.get<string>('CRON_SECRET');

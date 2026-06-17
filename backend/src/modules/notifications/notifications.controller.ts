@@ -101,7 +101,6 @@ export class NotificationsController {
       this.logger.log('CRON FINISHED');
       throw error;
     }
-
     // 4️⃣ buscar subscrições ainda não notificadas
     const subscriptions = await this.notificationsService.findAllPending();
 

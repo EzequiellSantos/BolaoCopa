@@ -50,7 +50,7 @@ export default function AdminNotificationsPage() {
             value={title}
             maxLength={100}
             onChange={e => setTitle(e.target.value)}
-            placeholder="Bolão Aziladuz"
+            placeholder="Bolão Copa"
           />
         </div>
 

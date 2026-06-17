@@ -7,7 +7,7 @@ import { useToast } from '../contexts/ToastContext';
 
 export default function AdminNotificationsPage() {
   const toast = useToast();
-  const [title, setTitle]     = useState('Bolão Aziladuz');
+  const [title, setTitle]     = useState('Bolão Copa');
   const [body, setBody]       = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError]     = useState('');

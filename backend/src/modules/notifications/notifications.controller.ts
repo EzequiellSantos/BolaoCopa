@@ -22,7 +22,6 @@ import { UserRole } from '../users/schemas/user.schema';
 import { RequestUser } from '../auth/interfaces/request-user.interface';
 import { Query, UnauthorizedException } from '@nestjs/common';
 import moment from 'moment-timezone';
-import { ConfigService } from '@nestjs/config';
 import { MatchesService } from '../matches/matches.service';
 import * as webpush from 'web-push';
 
@@ -37,7 +36,6 @@ export class NotificationsController {
 
   constructor(
     private readonly notificationsService: NotificationsService,
-    private readonly configService: ConfigService,
     private readonly matchesService: MatchesService,
   ) {}
 

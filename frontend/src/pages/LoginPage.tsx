@@ -1,47 +1,28 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { authApi } from '../api/services';
 import { getErrorMessage } from '../api/axios';
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
 
+  // Redireciona se já autenticado
   if (isAuthenticated) {
     navigate('/dashboard', { replace: true });
     return null;
   }
 
-  const toggleMode = () => {
-    setIsRegistering(value => !value);
-    setError('');
-    setConfirmPassword('');
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (isRegistering && password !== confirmPassword) {
-      setError('As senhas não conferem');
-      return;
-    }
-
     setLoading(true);
     try {
-      if (isRegistering) {
-        await authApi.register({ name, email, password });
-      }
-
       await login(email, password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
@@ -53,45 +34,50 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gray-950">
+
+      {/* ── Background decorativo ── */}
       <div className="absolute inset-0 pointer-events-none">
+        {/* grade hexagonal sutil */}
         <svg className="absolute inset-0 w-full h-full opacity-[0.04]" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <pattern id="hex" x="0" y="0" width="56" height="100" patternUnits="userSpaceOnUse">
               <polygon
                 points="28,2 54,16 54,44 28,58 2,44 2,16"
-                fill="none"
-                stroke="#22c55e"
-                strokeWidth="1"
+                fill="none" stroke="#22c55e" strokeWidth="1"
               />
               <polygon
                 points="28,52 54,66 54,94 28,108 2,94 2,66"
-                fill="none"
-                stroke="#22c55e"
-                strokeWidth="1"
+                fill="none" stroke="#22c55e" strokeWidth="1"
               />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#hex)" />
         </svg>
 
+        {/* brilho verde superior */}
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-brand-600 opacity-10 rounded-full blur-[120px]" />
+        {/* brilho verde inferior */}
         <div className="absolute -bottom-40 right-0 w-[400px] h-[300px] bg-brand-700 opacity-10 rounded-full blur-[100px]" />
       </div>
 
+      {/* ── Card ── */}
       <div className="relative z-10 w-full max-w-md mx-4">
+
+        {/* Logo / Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600/20 border border-brand-600/30 mb-4">
             <span className="text-3xl">⚽</span>
           </div>
           <h1 className="text-3xl font-black tracking-tight text-white">
-            Bolão <span className="text-brand-500">Aziladuz</span>
+            Bolão <span className="text-brand-500">Copa</span>
           </h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            {isRegistering ? 'Crie sua conta para participar' : 'Faça login e faça seu palpite'}
-          </p>
+          <p className="text-gray-500 mt-1 text-sm">Faça login e faça seu Palpite</p>
         </div>
 
+        {/* Form card */}
         <div className="bg-gray-900/80 backdrop-blur border border-gray-800 rounded-2xl p-8 shadow-2xl">
+
+          {/* Error banner */}
           {error && (
             <div className="mb-6 flex items-start gap-3 bg-red-950/60 border border-red-800/60 text-red-300 rounded-xl px-4 py-3 text-sm">
               <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -102,25 +88,7 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {isRegistering && (
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
-                  Nome
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Seu nome"
-                  required
-                  minLength={2}
-                  maxLength={100}
-                  autoComplete="name"
-                  className="input"
-                />
-              </div>
-            )}
-
+            {/* Email */}
             <div>
               <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
                 E-mail
@@ -136,6 +104,7 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* Password */}
             <div>
               <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
                 Senha
@@ -144,39 +113,14 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="********"
+                placeholder="••••••••"
                 required
-                minLength={6}
-                maxLength={64}
-                autoComplete={isRegistering ? 'new-password' : 'current-password'}
+                autoComplete="current-password"
                 className="input"
               />
-              {isRegistering && (
-                <p className="text-xs text-gray-500 mt-2">
-                  Use maiúsculas, minúsculas e números.
-                </p>
-              )}
             </div>
 
-            {isRegistering && (
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
-                  Confirmar senha
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  placeholder="********"
-                  required
-                  minLength={6}
-                  maxLength={64}
-                  autoComplete="new-password"
-                  className="input"
-                />
-              </div>
-            )}
-
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -185,25 +129,17 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  {isRegistering ? 'Criando...' : 'Entrando...'}
+                  Entrando...
                 </>
               ) : (
-                isRegistering ? 'Criar conta' : 'Entrar'
+                'Entrar'
               )}
             </button>
           </form>
-
-          <button
-            type="button"
-            onClick={toggleMode}
-            className="w-full mt-5 text-sm text-brand-400 hover:text-brand-300 font-semibold transition-colors"
-          >
-            {isRegistering ? 'Já tenho conta' : 'Criar uma conta'}
-          </button>
         </div>
 
         <p className="text-center text-xs text-gray-700 mt-6">
-          {isRegistering ? 'Novas contas entram como usuário comum.' : 'Entre com sua conta ou cadastre-se.'}
+          Acesso apenas por convite do administrador.
         </p>
       </div>
     </div>

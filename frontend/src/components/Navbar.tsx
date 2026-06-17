@@ -30,7 +30,7 @@ export default function Navbar() {
         <NavLink to="/dashboard" className="flex items-center gap-2 shrink-0">
           <span className="text-xl">⚽</span>
           <span className="font-black text-white tracking-tight">
-            Bolão <span className="text-brand-500">Aziladuz</span>
+            Bolão <span className="text-brand-500">Copa</span>
           </span>
         </NavLink>
 

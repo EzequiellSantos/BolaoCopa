@@ -18,6 +18,17 @@ export class MatchesService {
     @InjectModel(Bet.name) private readonly betModel: Model<BetDocument>,
   ) {}
 
+  /**
+   * Busca partidas cujo horário está entre start e end.
+   * Utilizado pelo cron para notificar próximas partidas.
+   */
+  async findBetweenDates(start: Date, end: Date) {
+    return this.matchModel
+      .find({ matchDate: { $gte: start, $lte: end } })
+      .lean();
+  }
+
+
   // ─── Criar partida ────────────────────────────────────────────────────
   async create(dto: CreateMatchDto): Promise<MatchDocument> {
     const match = new this.matchModel({
@@ -146,6 +157,28 @@ export class MatchesService {
     // Remove apostas órfãs associadas
     await this.betModel.deleteMany({ match: id });
   }
+
+  // matches.service.ts
+
+async closeStartedMatches(): Promise<{ closedCount: number; matches: MatchDocument[] }> {
+  const now = new Date();
+
+  const startedButOpen = await this.matchModel.find({
+    status: MatchStatus.OPEN,
+    matchDate: { $lte: now },
+  });
+
+  if (startedButOpen.length === 0) {
+    return { closedCount: 0, matches: [] };
+  }
+
+  await this.matchModel.updateMany(
+    { _id: { $in: startedButOpen.map(m => m._id) } },
+    { status: MatchStatus.CLOSED },
+  );
+
+  return { closedCount: startedButOpen.length, matches: startedButOpen };
+}
 
   // ─── Calcular pontuação das apostas (chamado ao FINISHED) ─────────────
   private async settleBets(

@@ -31,6 +31,18 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   FRONTEND_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  VAPID_PUBLIC_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  VAPID_PRIVATE_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  VAPID_SUBJECT?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>) {

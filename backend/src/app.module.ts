@@ -9,6 +9,7 @@ import { UsersModule } from './modules/users/users.module';
 import { MatchesModule } from './modules/matches/matches.module';
 import { BetsModule } from './modules/bets/bets.module';
 import { RankingModule } from './modules/ranking/ranking.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { RankingModule } from './modules/ranking/ranking.module';
     MatchesModule,
     BetsModule,
     RankingModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

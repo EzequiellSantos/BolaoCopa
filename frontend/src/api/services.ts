@@ -6,6 +6,9 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post<AuthResponse>('/auth/login', { email, password }).then(r => r.data),
 
+  register: (data: { name: string; email: string; password: string }) =>
+    api.post<AuthResponse>('/auth/register', data).then(r => r.data),
+
   me: () =>
     api.get<{ user: User }>('/auth/me').then(r => r.data.user),
 };
@@ -87,6 +90,21 @@ export const betsApi = {
 
   adminByMatch: (matchId: string) =>
     api.get<Bet[]>(`/bets/admin/match/${matchId}`).then(r => r.data),
+};
+
+// ─── Notifications (push) ──────────────────────────────────────────────────────
+export const notificationsApi = {
+  getVapidKey: () =>
+    api.get<{ publicKey: string }>('/notifications/vapid-public-key').then(r => r.data.publicKey),
+
+  subscribe: (subscription: PushSubscriptionJSON) =>
+    api.post('/notifications/subscribe', subscription).then(r => r.data),
+
+  unsubscribe: (endpoint: string) =>
+    api.delete('/notifications/subscribe', { data: { endpoint } }).then(r => r.data),
+
+  broadcast: (title: string, body: string) =>
+    api.post<{ sent: number; failed: number; total: number }>('/notifications/broadcast', { title, body }).then(r => r.data),
 };
 
 // ─── Ranking ──────────────────────────────────────────────────────────────────

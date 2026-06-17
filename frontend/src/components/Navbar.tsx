@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsAdmin } from '../hooks/useAuth';
+import EnableNotificationsButton from './EnableNotificationsButton';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -52,12 +53,16 @@ export default function Navbar() {
               <NavLink to="/admin/usuarios" className={navLinkClass}>
                 👥 Usuários
               </NavLink>
+              <NavLink to="/admin/notificacoes" className={navLinkClass}>
+                🔔 Notificações
+              </NavLink>
             </>
           )}
         </nav>
 
         {/* User menu — desktop */}
         <div className="hidden md:flex items-center gap-3">
+          <EnableNotificationsButton />
           <div className="text-right">
             <p className="text-sm font-semibold text-white leading-none">{user?.name}</p>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -100,9 +105,13 @@ export default function Navbar() {
             <>
               <NavLink to="/admin/partidas" className={navLinkClass} onClick={() => setMenuOpen(false)}>⚽ Partidas</NavLink>
               <NavLink to="/admin/usuarios" className={navLinkClass} onClick={() => setMenuOpen(false)}>👥 Usuários</NavLink>
+              <NavLink to="/admin/notificacoes" className={navLinkClass} onClick={() => setMenuOpen(false)}>🔔 Notificações</NavLink>
             </>
           )}
-          <div className="border-t border-gray-800 mt-2 pt-3 flex items-center justify-between">
+          <div className="border-t border-gray-800 mt-2 pt-3">
+            <EnableNotificationsButton className="w-full justify-center mb-3" />
+          </div>
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-white">{user?.name}</p>
               <p className="text-xs text-gray-500">{user?.role === 'ADMIN' ? '👑 Admin' : '🎮 Jogador'}</p>

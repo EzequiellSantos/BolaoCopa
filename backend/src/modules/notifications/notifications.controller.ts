@@ -29,7 +29,6 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 @Controller('notifications')
-@UseGuards(JwtAuthGuard)
 export class NotificationsController {
 
   private readonly logger = new Logger(NotificationsController.name);
@@ -41,12 +40,14 @@ export class NotificationsController {
 
   // GET /api/notifications/vapid-public-key — chave pública para o cliente inscrever-se
   @Get('vapid-public-key')
+  @UseGuards(JwtAuthGuard)
   getVapidPublicKey() {
     return { publicKey: this.notificationsService.getPublicKey() };
   }
 
   // POST /api/notifications/subscribe — registra a inscrição do usuário logado
   @Post('subscribe')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   subscribe(@CurrentUser() user: RequestUser, @Body() dto: SubscribeDto) {
     return this.notificationsService.saveSubscription(user.userId, dto);
@@ -54,6 +55,7 @@ export class NotificationsController {
 
   // DELETE /api/notifications/subscribe — remove uma inscrição
   @Delete('subscribe')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   unsubscribe(@Body() dto: UnsubscribeDto) {
     return this.notificationsService.removeSubscription(dto.endpoint);
@@ -131,7 +133,7 @@ export class NotificationsController {
 
   // POST /api/notifications/broadcast — apenas ADMIN envia notificação a todos
   @Post('broadcast')
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   async broadcast(@Body() dto: BroadcastDto) {
     if (!this.notificationsService.isConfigured()) {

@@ -105,7 +105,7 @@ export class NotificationsService implements OnModuleInit {
 
       const payload = JSON.stringify({
         title: '⚽ Jogo começando em breve',
-        body: `${match.homeTeam} x ${match.awayTeam} começa em 20 minutos`,
+        body: `${match.homeTeam} x ${match.awayTeam} começa em breve`,
         matchDate: localDate,
       });
 

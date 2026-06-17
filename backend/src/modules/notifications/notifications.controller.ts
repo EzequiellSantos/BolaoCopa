@@ -20,11 +20,14 @@ import { Roles } from '../../common/decorators/roles.decorators';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { RequestUser } from '../auth/interfaces/request-user.interface';
-import { Query, UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, Headers } from '@nestjs/common';
 import moment from 'moment-timezone';
 import { ConfigService } from '@nestjs/config';
 import { MatchesService } from '../matches/matches.service';
 import * as webpush from 'web-push';
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
@@ -62,11 +65,11 @@ export class NotificationsController {
   //  Cron – executado a cada hora (0 * * * *)
   // -------------------------------------------------
   @Get('cron/send-match-notifications')
-  async sendMatchNotifications(@Query('secret') secret: string) {
+  async sendMatchNotifications(@Headers('authorization') authHeader: string) {
     this.logger.log('Cron job started: sendMatchNotifications');
     // 1️⃣ proteção
     const cronSecret = this.configService.get<string>('CRON_SECRET');
-    if (!cronSecret || secret !== cronSecret) {
+    if (!cronSecret || !authHeader || authHeader.replace('Bearer ', '') !== cronSecret) {
       throw new UnauthorizedException('Invalid cron secret');
     }
 

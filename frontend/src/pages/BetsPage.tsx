@@ -7,6 +7,7 @@ import StatusBadge from '../components/StatusBadge';
 import Spinner from '../components/Spinner';
 import ErrorBanner from '../components/ErrorBanner';
 import EmptyState from '../components/EmptyState';
+import MatchPicksModal from '../components/MatchPicksModal';
 import { useToast } from '../contexts/ToastContext';
 
 function fmt(date: string) {
@@ -85,9 +86,10 @@ interface BetCardProps {
   match: Match;
   existingBet?: Bet;
   onBetSaved: () => void;
+  onViewPicks: (match: Match) => void;
 }
 
-function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
+function BetCard({ match, existingBet, onBetSaved, onViewPicks }: BetCardProps) {
   const toast = useToast();
   const [homeScore, setHomeScore] = useState(String(existingBet?.homeScore ?? ''));
   const [awayScore, setAwayScore] = useState(String(existingBet?.awayScore ?? ''));
@@ -150,24 +152,40 @@ function BetCard({ match, existingBet, onBetSaved }: BetCardProps) {
 
   return (
     <div className={`card flex flex-col gap-4 transition-all ${hasBet ? 'border-brand-800/60' : 'border-gray-800'}`}>
-      <div className="flex items-start justify-between gap-2 flex-wrap">
-        <div>
+      {/* Header — clicável quando a partida não está mais aberta */}
+      <button
+        type="button"
+        disabled={isOpen}
+        onClick={() => onViewPicks(match)}
+        className={`flex items-start justify-between gap-2 flex-wrap text-left w-full rounded-lg -m-1 p-1 transition-colors ${
+          !isOpen ? 'active:bg-gray-800/60 sm:hover:bg-gray-800/40 cursor-pointer' : 'cursor-default'
+        }`}
+      >
+        <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <StatusBadge status={match.status} />
-            {match.description && <span className="text-xs text-gray-500">{match.description}</span>}
+            {match.description && <span className="text-xs text-gray-500 truncate">{match.description}</span>}
           </div>
           <p className="font-black text-white text-xl tracking-tight">
             {match.homeTeam} <span className="text-gray-600 font-light">×</span> {match.awayTeam}
           </p>
           <p className="text-xs text-gray-500 mt-1">📅 {fmt(match.matchDate)}{match.stadium ? ` · 🏟️ ${match.stadium}` : ''}</p>
+          {!isOpen && (
+            <p className="text-[11px] text-brand-500 mt-1.5 font-semibold flex items-center gap-1">
+              👁️ Ver palpites de todos
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </p>
+          )}
         </div>
         {match.status === MatchStatus.FINISHED && match.homeScore !== null && (
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <p className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">Resultado</p>
             <p className="text-2xl font-black text-brand-400">{match.homeScore} × {match.awayScore}</p>
           </div>
         )}
-      </div>
+      </button>
 
       {existingBet && match.status === MatchStatus.FINISHED && (
         <div className={`text-sm font-semibold ${resultLabel(existingBet.result).cls}`}>
@@ -249,6 +267,7 @@ export default function BetsPage() {
   const [error, setError]     = useState('');
   const [tab, setTab]         = useState<MainTab>('open');
   const [category, setCategory] = useState<string>('all');
+  const [picksMatch, setPicksMatch] = useState<Match | null>(null);
 
   const load = async () => {
     try {
@@ -367,9 +386,20 @@ export default function BetsPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {displayed.map(m => (
-            <BetCard key={m._id} match={m} existingBet={betByMatch(m._id)} onBetSaved={load} />
+            <BetCard
+              key={m._id}
+              match={m}
+              existingBet={betByMatch(m._id)}
+              onBetSaved={load}
+              onViewPicks={setPicksMatch}
+            />
           ))}
         </div>
+      )}
+
+      {/* Modal de palpites de todos */}
+      {picksMatch && (
+        <MatchPicksModal match={picksMatch} onClose={() => setPicksMatch(null)} />
       )}
     </div>
   );

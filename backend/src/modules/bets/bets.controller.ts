@@ -69,4 +69,10 @@ export class BetsController {
   findByMatch(@Param('matchId') matchId: string) {
     return this.betsService.findByMatch(matchId);
   }
+
+  // GET /api/bets/match/:matchId — palpites de todos (só após fechar)
+  @Get('match/:matchId')
+  findMatchPicks(@Param('matchId') matchId: string) {
+    return this.betsService.findPicksForMatch(matchId);
+  }
 }

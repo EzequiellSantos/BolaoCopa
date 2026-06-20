@@ -35,14 +35,12 @@ export class BetsService {
       throw new NotFoundException('Partida não encontrada');
     }
 
-    // Regra: só aceita apostas em partidas OPEN
     if (match.status !== MatchStatus.OPEN) {
       throw new BadRequestException(
         `Esta partida não está aberta para apostas. Status atual: ${match.status}`,
       );
     }
 
-    // Regra: 1 aposta por usuário por partida
     const userObjectId = new Types.ObjectId(userId);
     const matchObjectId = new Types.ObjectId(dto.matchId);
 
@@ -74,7 +72,6 @@ export class BetsService {
           'Você já possui uma aposta para esta partida.',
         );
       }
-
       throw error;
     }
   }
@@ -93,12 +90,10 @@ export class BetsService {
       throw new NotFoundException('Aposta não encontrada');
     }
 
-    // Regra: usuário só edita a própria aposta
     if (String(bet.user) !== userId) {
       throw new BadRequestException('Você não tem permissão para editar esta aposta');
     }
 
-    // Regra: não pode editar após CLOSED ou FINISHED
     const match = bet.match as MatchDocument;
     if (match.status !== MatchStatus.OPEN) {
       throw new BadRequestException(
@@ -140,7 +135,6 @@ export class BetsService {
       throw new NotFoundException('Aposta não encontrada');
     }
 
-    // Após populate, bet.user é um objeto; usamos _id para comparar com o userId
     const betOwnerId =
       bet.user && typeof bet.user === 'object' && '_id' in bet.user
         ? String((bet.user as { _id: unknown })._id)
@@ -151,6 +145,40 @@ export class BetsService {
     }
 
     return bet;
+  }
+
+  // ─── Palpites de uma partida — visão pública (qualquer usuário logado) ──
+  // Só libera depois que a partida sai de OPEN, para não revelar
+  // palpites de outros usuários antes do fechamento das apostas.
+  async findPicksForMatch(matchId: string): Promise<BetDocument[]> {
+
+    const match = await this.matchModel.findById(matchId).lean();
+
+    if (!match) {
+      throw new NotFoundException('Partida não encontrada');
+    }
+
+
+    if (match.status === MatchStatus.OPEN) {
+      throw new BadRequestException(
+        'Os palpites desta partida ainda não foram revelados.',
+      );
+    }
+
+
+    const bets = await this.betModel
+      .find({
+        match: new Types.ObjectId(matchId),
+      })
+      .populate('user', 'name')
+      .sort({
+        points: -1,
+        createdAt: 1,
+      })
+      .lean();
+
+
+    return bets as unknown as BetDocument[];
   }
 
   // ─── Apostas de uma partida (ADMIN) ───────────────────────────────────

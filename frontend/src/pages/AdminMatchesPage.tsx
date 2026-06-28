@@ -36,7 +36,7 @@ export default function AdminMatchesPage() {
   const [selected, setSelected]   = useState<Match | null>(null);
   const [toDelete, setToDelete]   = useState<Match | null>(null);
   const [createForm, setCreateForm] = useState<CreateForm>(emptyCreate);
-  const [resultForm, setResultForm] = useState<ResultForm>({ homeScore: '', awayScore: '' });
+  const [resultForm, setResultForm] = useState<ResultForm>({ homeScore: '', awayScore: '', penaltyWinner: '' });
   const [saving, setSaving]       = useState(false);
   const [formError, setFormError] = useState('');
 

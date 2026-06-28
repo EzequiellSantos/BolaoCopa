@@ -270,7 +270,7 @@ export default function BetsPage() {
   const [picksMatch, setPicksMatch] = useState<Match | null>(null);
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const hasAutoScrolled = useRef(false);
+  const pendingScrollToLastClosed = useRef(false);
 
   const load = async () => {
     try {
@@ -284,19 +284,16 @@ export default function BetsPage() {
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    if (loading || matches.length === 0 || hasAutoScrolled.current) return;
+    if (!pendingScrollToLastClosed.current || tab !== 'all') return;
+    pendingScrollToLastClosed.current = false;
 
     const lastClosed = [...matches].reverse().find(m => m.status === MatchStatus.CLOSED);
     if (!lastClosed) return;
 
-    hasAutoScrolled.current = true;
-    setTab('all');
-    setCategory('all');
-
     setTimeout(() => {
       cardRefs.current.get(lastClosed._id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 200);
-  }, [matches, loading]);
+    }, 150);
+  }, [tab, matches]);
 
   const betByMatch = (matchId: unknown) => {
     const id = getEntityId(matchId);
@@ -316,6 +313,7 @@ export default function BetsPage() {
     : baseMatches.filter(m => extractCategory(m) === activeCategory);
 
   const handleTabChange = (t: MainTab) => {
+    if (t === 'all') pendingScrollToLastClosed.current = true;
     setTab(t);
     setCategory('all');
   };

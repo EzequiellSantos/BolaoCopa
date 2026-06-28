@@ -51,7 +51,7 @@ export class Match {
   @Prop({ trim: true, maxlength: 100 })
   stadium?: string;
 
-  @Prop({ type: String, enum: ['home', 'away'], default: null })
+  @Prop({ type: String, enum: ['home', 'away', null], default: null })
   penaltyWinner: 'home' | 'away' | null;
 }
 

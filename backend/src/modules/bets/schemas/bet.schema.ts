@@ -40,7 +40,7 @@ export class Bet {
   @Prop({ required: true, min: 0 })
   awayScore: number;
 
-  @Prop({ type: String, enum: ['home', 'away'], default: null })
+  @Prop({ type: String, enum: ['home', 'away', null], default: null })
   penaltyWinner: 'home' | 'away' | null;
 
   // ─── Resultado calculado após o jogo ─────────────────────────────────

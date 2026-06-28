@@ -43,7 +43,15 @@ export class RankingService {
             {
               $match: {
                 $expr: { $eq: ['$user', '$$userId'] },
-                result: { $in: [BetResult.EXACT, BetResult.WINNER, BetResult.MISS] },
+                result: {
+                  $in: [
+                    BetResult.EXACT,
+                    BetResult.WINNER,
+                    BetResult.MISS,
+                    BetResult.PENALTY_WINNER,
+                    BetResult.PENALTY_DRAW,
+                  ],
+                },
               },
             },
           ],
@@ -59,7 +67,9 @@ export class RankingService {
             $size: {
               $filter: {
                 input: '$resolvedBets',
-                cond: { $eq: ['$$this.result', BetResult.EXACT] },
+                cond: {
+                  $in: ['$$this.result', [BetResult.EXACT, BetResult.PENALTY_WINNER]],
+                },
               },
             },
           },
@@ -67,7 +77,9 @@ export class RankingService {
             $size: {
               $filter: {
                 input: '$resolvedBets',
-                cond: { $eq: ['$$this.result', BetResult.WINNER] },
+                cond: {
+                  $in: ['$$this.result', [BetResult.WINNER, BetResult.PENALTY_DRAW]],
+                },
               },
             },
           },
@@ -149,6 +161,8 @@ export class RankingService {
           betAwayScore: bet.awayScore,
           actualHomeScore: match.homeScore,
           actualAwayScore: match.awayScore,
+          betPenaltyWinner: bet.penaltyWinner,
+          actualPenaltyWinner: match.penaltyWinner,
         });
 
         return this.betModel.findByIdAndUpdate(bet._id, { result, points });

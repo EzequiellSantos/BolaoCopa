@@ -61,4 +61,51 @@ describe('calculateBetScore', () => {
     });
     expect(result).toEqual({ result: BetResult.MISS, points: 0 });
   });
+
+  // ─── Pênaltis (mata-mata) ─────────────────────────────────────────────
+
+  it('deve retornar PENALTY_WINNER e 5 pontos ao acertar placar e pênaltis', () => {
+    const result = calculateBetScore({
+      betHomeScore: 1, betAwayScore: 1,
+      actualHomeScore: 1, actualAwayScore: 1,
+      betPenaltyWinner: 'home', actualPenaltyWinner: 'home',
+    });
+    expect(result).toEqual({ result: BetResult.PENALTY_WINNER, points: 5 });
+  });
+
+  it('deve retornar EXACT e 3 pontos ao acertar placar mas errar pênaltis', () => {
+    const result = calculateBetScore({
+      betHomeScore: 1, betAwayScore: 1,
+      actualHomeScore: 1, actualAwayScore: 1,
+      betPenaltyWinner: 'away', actualPenaltyWinner: 'home',
+    });
+    expect(result).toEqual({ result: BetResult.EXACT, points: 3 });
+  });
+
+  it('deve retornar PENALTY_DRAW e 2 pontos ao errar placar mas acertar pênaltis', () => {
+    const result = calculateBetScore({
+      betHomeScore: 0, betAwayScore: 0,
+      actualHomeScore: 1, actualAwayScore: 1,
+      betPenaltyWinner: 'away', actualPenaltyWinner: 'away',
+    });
+    expect(result).toEqual({ result: BetResult.PENALTY_DRAW, points: 2 });
+  });
+
+  it('deve retornar WINNER e 1 ponto ao apostar empate com placar errado e pênaltis errado', () => {
+    const result = calculateBetScore({
+      betHomeScore: 0, betAwayScore: 0,
+      actualHomeScore: 1, actualAwayScore: 1,
+      betPenaltyWinner: 'home', actualPenaltyWinner: 'away',
+    });
+    expect(result).toEqual({ result: BetResult.WINNER, points: 1 });
+  });
+
+  it('deve retornar MISS ao apostar vencedor quando partida foi para pênaltis', () => {
+    const result = calculateBetScore({
+      betHomeScore: 2, betAwayScore: 1,
+      actualHomeScore: 1, actualAwayScore: 1,
+      actualPenaltyWinner: 'home',
+    });
+    expect(result).toEqual({ result: BetResult.MISS, points: 0 });
+  });
 });

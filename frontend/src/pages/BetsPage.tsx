@@ -336,7 +336,7 @@ export default function BetsPage() {
       </div>
 
       {/* Filtro por grupo / fase */}
-      {!loading && availableCategories.length > 1 && (
+      {!loading && availableCategories.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest">
             {tab === 'open' ? 'Filtrar por grupo' : 'Filtrar por fase'}

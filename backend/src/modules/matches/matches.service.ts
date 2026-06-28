@@ -102,6 +102,7 @@ export class MatchesService {
             status: MatchStatus.FINISHED,
             homeScore,
             awayScore,
+            penaltyWinner: dto.penaltyWinner ?? null,
             ...(dto.description && { description: dto.description }),
             ...(dto.stadium && { stadium: dto.stadium }),
           },
@@ -110,7 +111,7 @@ export class MatchesService {
         .lean();
 
       // Calcula pontuação de todas as apostas dessa partida
-      await this.settleBets(id, homeScore, awayScore);
+      await this.settleBets(id, homeScore, awayScore, dto.penaltyWinner ?? null);
 
       return updated;
     }
@@ -185,6 +186,7 @@ async closeStartedMatches(): Promise<{ closedCount: number; matches: MatchDocume
     matchId: string,
     actualHomeScore: number,
     actualAwayScore: number,
+    actualPenaltyWinner: 'home' | 'away' | null = null,
   ): Promise<void> {
     const matchFilters: unknown[] = [matchId];
     if (Types.ObjectId.isValid(matchId)) {
@@ -199,6 +201,8 @@ async closeStartedMatches(): Promise<{ closedCount: number; matches: MatchDocume
         betAwayScore: bet.awayScore,
         actualHomeScore,
         actualAwayScore,
+        betPenaltyWinner: bet.penaltyWinner,
+        actualPenaltyWinner,
       });
 
       return this.betModel.findByIdAndUpdate(bet._id, { result, points });

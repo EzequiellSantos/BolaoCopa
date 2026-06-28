@@ -6,10 +6,12 @@ import { Match } from '../../matches/schemas/match.schema';
 export type BetDocument = Bet & Document;
 
 export enum BetResult {
-  EXACT = 'EXACT',     // Placar exato → 3 pontos
-  WINNER = 'WINNER',   // Acertou vencedor/empate → 1 ponto
-  MISS = 'MISS',       // Errou → 0 pontos
-  PENDING = 'PENDING', // Jogo ainda não finalizado
+  PENALTY_WINNER = 'PENALTY_WINNER', // Placar exato + acertou pênaltis → 5 pontos
+  EXACT = 'EXACT',                   // Placar exato → 3 pontos
+  PENALTY_DRAW = 'PENALTY_DRAW',     // Empate (placar errado) + acertou pênaltis → 2 pontos
+  WINNER = 'WINNER',                 // Acertou vencedor/empate → 1 ponto
+  MISS = 'MISS',                     // Errou → 0 pontos
+  PENDING = 'PENDING',               // Jogo ainda não finalizado
 }
 
 @Schema({
@@ -38,6 +40,9 @@ export class Bet {
   @Prop({ required: true, min: 0 })
   awayScore: number;
 
+  @Prop({ type: String, enum: ['home', 'away'], default: null })
+  penaltyWinner: 'home' | 'away' | null;
+
   // ─── Resultado calculado após o jogo ─────────────────────────────────
   @Prop({
     type: String,
@@ -46,7 +51,7 @@ export class Bet {
   })
   result: BetResult;
 
-  @Prop({ type: Number, default: 0, min: 0, max: 3 })
+  @Prop({ type: Number, default: 0, min: 0, max: 5 })
   points: number;
 }
 

@@ -50,6 +50,9 @@ export class Match {
 
   @Prop({ trim: true, maxlength: 100 })
   stadium?: string;
+
+  @Prop({ type: String, enum: ['home', 'away'], default: null })
+  penaltyWinner: 'home' | 'away' | null;
 }
 
 export const MatchSchema = SchemaFactory.createForClass(Match);

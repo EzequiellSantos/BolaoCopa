@@ -11,10 +11,12 @@ export enum MatchStatus {
 }
 
 export enum BetResult {
-  EXACT   = 'EXACT',
-  WINNER  = 'WINNER',
-  MISS    = 'MISS',
-  PENDING = 'PENDING',
+  PENALTY_WINNER = 'PENALTY_WINNER',
+  EXACT          = 'EXACT',
+  PENALTY_DRAW   = 'PENALTY_DRAW',
+  WINNER         = 'WINNER',
+  MISS           = 'MISS',
+  PENDING        = 'PENDING',
 }
 
 // ─── Entidades ────────────────────────────────────────────────────────────────
@@ -37,6 +39,7 @@ export interface Match {
   awayScore: number | null;
   description?: string;
   stadium?: string;
+  penaltyWinner?: 'home' | 'away' | null;
 }
 
 export interface Bet {
@@ -45,6 +48,7 @@ export interface Bet {
   match: Match | string;
   homeScore: number;
   awayScore: number;
+  penaltyWinner?: 'home' | 'away' | null;
   result: BetResult;
   points: number;
   createdAt: string;

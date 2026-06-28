@@ -62,6 +62,7 @@ export const matchesApi = {
     awayScore: number;
     description: string;
     stadium: string;
+    penaltyWinner: 'home' | 'away';
   }>) => api.patch<Match>(`/matches/${id}`, data).then(r => r.data),
 
   updateStatus: (id: string, status: MatchStatus) =>
@@ -73,7 +74,7 @@ export const matchesApi = {
 
 // ─── Bets ─────────────────────────────────────────────────────────────────────
 export const betsApi = {
-  create: (data: { matchId: string; homeScore: number; awayScore: number }) =>
+  create: (data: { matchId: string; homeScore: number; awayScore: number; penaltyWinner?: 'home' | 'away' }) =>
     api.post<Bet>('/bets', data).then(r => r.data),
 
   myBets: () =>
@@ -82,7 +83,7 @@ export const betsApi = {
   getById: (id: string) =>
     api.get<Bet>(`/bets/${id}`).then(r => r.data),
 
-  update: (id: string, data: { homeScore?: number; awayScore?: number }) =>
+  update: (id: string, data: { homeScore?: number; awayScore?: number; penaltyWinner?: 'home' | 'away' }) =>
     api.patch<Bet>(`/bets/${id}`, data).then(r => r.data),
 
   adminAll: () =>

@@ -16,10 +16,15 @@ interface CreateForm {
   matchDate: string; description: string; stadium: string;
 }
 const emptyCreate: CreateForm = { homeTeam: '', awayTeam: '', matchDate: '', description: '', stadium: '' };
-interface ResultForm { homeScore: string; awayScore: string; }
+interface ResultForm { homeScore: string; awayScore: string; penaltyWinner: '' | 'home' | 'away'; }
 
 function fmt(date: string) {
   return new Date(date).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function isKnockout(m: { description?: string }): boolean {
+  const d = m.description ?? '';
+  return ['Mata-mata', 'Oitavas', 'Quartas', 'Semifinal', 'Semis', '3º Lugar', 'Final'].some(p => d.includes(p));
 }
 
 export default function AdminMatchesPage() {
@@ -62,7 +67,7 @@ export default function AdminMatchesPage() {
   }, [matches, loading]);
 
   const openCreate = () => { setCreateForm(emptyCreate); setFormError(''); setModal('create'); };
-  const openResult = (m: Match) => { setSelected(m); setResultForm({ homeScore: '', awayScore: '' }); setFormError(''); setModal('result'); };
+  const openResult = (m: Match) => { setSelected(m); setResultForm({ homeScore: '', awayScore: '', penaltyWinner: '' }); setFormError(''); setModal('result'); };
   const closeModal = () => { setModal(null); setSelected(null); };
 
   const handleCreate = async () => {
@@ -77,12 +82,20 @@ export default function AdminMatchesPage() {
 
   const handleResult = async () => {
     if (!selected) return;
+    const h = Number(resultForm.homeScore);
+    const a = Number(resultForm.awayScore);
+    const isDrawKnockout = isKnockout(selected) && h === a;
+    if (isDrawKnockout && !resultForm.penaltyWinner) {
+      setFormError('Selecione quem venceu nos pênaltis.');
+      return;
+    }
     setSaving(true); setFormError('');
     try {
       await matchesApi.update(selected._id, {
         status: MatchStatus.FINISHED,
-        homeScore: Number(resultForm.homeScore),
-        awayScore: Number(resultForm.awayScore),
+        homeScore: h,
+        awayScore: a,
+        ...(isDrawKnockout && resultForm.penaltyWinner ? { penaltyWinner: resultForm.penaltyWinner } : {}),
       });
       await load(); closeModal();
       toast.success('Partida finalizada! Pontos calculados.');
@@ -204,30 +217,57 @@ export default function AdminMatchesPage() {
       )}
 
       {/* Modal: resultado */}
-      {modal === 'result' && selected && (
-        <Modal title="Definir Resultado" onClose={closeModal} size="sm">
-          <div className="space-y-4">
-            {formError && <ErrorBanner message={formError} />}
-            <p className="text-center font-bold text-white text-lg">{selected.homeTeam} × {selected.awayTeam}</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">{selected.homeTeam}</label>
-                <input className="input text-center text-2xl font-bold" type="number" min={0} value={resultForm.homeScore} onChange={e => setResultForm(f => ({ ...f, homeScore: e.target.value }))} placeholder="0" />
+      {modal === 'result' && selected && (() => {
+        const h = Number(resultForm.homeScore);
+        const a = Number(resultForm.awayScore);
+        const scoresEntered = resultForm.homeScore !== '' && resultForm.awayScore !== '';
+        const showPenalty = isKnockout(selected) && scoresEntered && h === a;
+        return (
+          <Modal title="Definir Resultado" onClose={closeModal} size="sm">
+            <div className="space-y-4">
+              {formError && <ErrorBanner message={formError} />}
+              <p className="text-center font-bold text-white text-lg">{selected.homeTeam} × {selected.awayTeam}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">{selected.homeTeam}</label>
+                  <input className="input text-center text-2xl font-bold" type="number" min={0} value={resultForm.homeScore} onChange={e => setResultForm(f => ({ ...f, homeScore: e.target.value, penaltyWinner: '' }))} placeholder="0" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">{selected.awayTeam}</label>
+                  <input className="input text-center text-2xl font-bold" type="number" min={0} value={resultForm.awayScore} onChange={e => setResultForm(f => ({ ...f, awayScore: e.target.value, penaltyWinner: '' }))} placeholder="0" />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">{selected.awayTeam}</label>
-                <input className="input text-center text-2xl font-bold" type="number" min={0} value={resultForm.awayScore} onChange={e => setResultForm(f => ({ ...f, awayScore: e.target.value }))} placeholder="0" />
+              {showPenalty && (
+                <div className="p-3 rounded-xl bg-yellow-900/20 border border-yellow-800/40">
+                  <p className="text-xs font-semibold text-yellow-400 uppercase tracking-widest mb-2">Quem venceu nos pênaltis?</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setResultForm(f => ({ ...f, penaltyWinner: 'home' }))}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${resultForm.penaltyWinner === 'home' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                    >
+                      {selected.homeTeam}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setResultForm(f => ({ ...f, penaltyWinner: 'away' }))}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${resultForm.penaltyWinner === 'away' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                    >
+                      {selected.awayTeam}
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button onClick={handleResult} disabled={saving} className="btn-primary flex-1">
+                  {saving ? <span className="flex items-center justify-center gap-2"><Spinner size="sm" /> Finalizando...</span> : 'Confirmar'}
+                </button>
+                <button onClick={closeModal} className="btn-secondary flex-1">Cancelar</button>
               </div>
             </div>
-            <div className="flex gap-3 pt-2">
-              <button onClick={handleResult} disabled={saving} className="btn-primary flex-1">
-                {saving ? <span className="flex items-center justify-center gap-2"><Spinner size="sm" /> Finalizando...</span> : 'Confirmar'}
-              </button>
-              <button onClick={closeModal} className="btn-secondary flex-1">Cancelar</button>
-            </div>
-          </div>
-        </Modal>
-      )}
+          </Modal>
+        );
+      })()}
 
       {/* Confirm delete */}
       {toDelete && (

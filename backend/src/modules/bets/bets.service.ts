@@ -60,6 +60,7 @@ export class BetsService {
       match: matchObjectId,
       homeScore: dto.homeScore,
       awayScore: dto.awayScore,
+      penaltyWinner: dto.penaltyWinner ?? null,
       result: BetResult.PENDING,
       points: 0,
     });

@@ -28,10 +28,12 @@ function pickUserInitial(name: string): string {
 }
 
 const resultStyle: Record<BetResult, { label: string; cls: string; ring: string }> = {
-  [BetResult.EXACT]:   { label: '🎯 Exato',    cls: 'text-brand-400 bg-brand-600/15',  ring: 'ring-brand-700/40' },
-  [BetResult.WINNER]:  { label: '✅ Vencedor', cls: 'text-blue-400 bg-blue-600/15',    ring: 'ring-blue-700/40' },
-  [BetResult.MISS]:    { label: '❌ Errou',    cls: 'text-red-400 bg-red-600/10',      ring: 'ring-red-800/30' },
-  [BetResult.PENDING]: { label: '⏳ Aguardando', cls: 'text-gray-500 bg-gray-800/60',  ring: 'ring-gray-700/40' },
+  [BetResult.PENALTY_WINNER]: { label: '🏆 Pênaltis',    cls: 'text-yellow-400 bg-yellow-600/15', ring: 'ring-yellow-700/40' },
+  [BetResult.EXACT]:          { label: '🎯 Exato',        cls: 'text-brand-400 bg-brand-600/15',   ring: 'ring-brand-700/40' },
+  [BetResult.PENALTY_DRAW]:   { label: '🥅 Pên. parcial', cls: 'text-orange-400 bg-orange-600/15', ring: 'ring-orange-700/40' },
+  [BetResult.WINNER]:         { label: '✅ Vencedor',     cls: 'text-blue-400 bg-blue-600/15',     ring: 'ring-blue-700/40' },
+  [BetResult.MISS]:           { label: '❌ Errou',        cls: 'text-red-400 bg-red-600/10',       ring: 'ring-red-800/30' },
+  [BetResult.PENDING]:        { label: '⏳ Aguardando',   cls: 'text-gray-500 bg-gray-800/60',     ring: 'ring-gray-700/40' },
 };
 
 interface Props {

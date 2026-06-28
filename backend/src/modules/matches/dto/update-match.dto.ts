@@ -1,5 +1,6 @@
 import {
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -34,4 +35,8 @@ export class UpdateMatchDto {
   @IsString()
   @MaxLength(100)
   stadium?: string;
+
+  @IsOptional()
+  @IsIn(['home', 'away'], { message: 'penaltyWinner deve ser "home" ou "away"' })
+  penaltyWinner?: 'home' | 'away';
 }

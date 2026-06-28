@@ -16,10 +16,12 @@ function fmt(date: string) {
 
 function resultLabel(result: BetResult) {
   const map: Record<BetResult, { label: string; cls: string }> = {
-    [BetResult.EXACT]:   { label: '🎯 Placar exato · +3pts', cls: 'text-brand-400' },
-    [BetResult.WINNER]:  { label: '✅ Vencedor certo · +1pt', cls: 'text-blue-400' },
-    [BetResult.MISS]:    { label: '❌ Errou · 0pts',          cls: 'text-red-400' },
-    [BetResult.PENDING]: { label: '⏳ Aguardando resultado',  cls: 'text-gray-500' },
+    [BetResult.PENALTY_WINNER]: { label: '🏆 Pênaltis exato · +5pts',   cls: 'text-yellow-400' },
+    [BetResult.EXACT]:          { label: '🎯 Placar exato · +3pts',      cls: 'text-brand-400' },
+    [BetResult.PENALTY_DRAW]:   { label: '🥅 Pênaltis acertado · +2pts', cls: 'text-orange-400' },
+    [BetResult.WINNER]:         { label: '✅ Empate acertado · +1pt',    cls: 'text-blue-400' },
+    [BetResult.MISS]:           { label: '❌ Errou · 0pts',              cls: 'text-red-400' },
+    [BetResult.PENDING]:        { label: '⏳ Aguardando resultado',       cls: 'text-gray-500' },
   };
   return map[result];
 }
@@ -80,6 +82,11 @@ function categoryLabel(cat: string): string {
   return GROUP_LETTERS.includes(cat) ? `Grupo ${cat}` : cat;
 }
 
+function isKnockout(match: Match): boolean {
+  const d = match.description ?? '';
+  return ['Mata-mata', 'Oitavas', 'Quartas', 'Semifinal', 'Semis', '3º Lugar', 'Final'].some(p => d.includes(p));
+}
+
 // ─── BetCard ──────────────────────────────────────────────────────────────────
 
 interface BetCardProps {
@@ -91,11 +98,12 @@ interface BetCardProps {
 
 function BetCard({ match, existingBet, onBetSaved, onViewPicks }: BetCardProps) {
   const toast = useToast();
-  const [homeScore, setHomeScore] = useState(String(existingBet?.homeScore ?? ''));
-  const [awayScore, setAwayScore] = useState(String(existingBet?.awayScore ?? ''));
-  const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving]       = useState(false);
-  const [error, setError]         = useState('');
+  const [homeScore, setHomeScore]         = useState(String(existingBet?.homeScore ?? ''));
+  const [awayScore, setAwayScore]         = useState(String(existingBet?.awayScore ?? ''));
+  const [penaltyWinner, setPenaltyWinner] = useState<'home' | 'away' | null>(existingBet?.penaltyWinner ?? null);
+  const [isEditing, setIsEditing]         = useState(false);
+  const [saving, setSaving]               = useState(false);
+  const [error, setError]                 = useState('');
 
   const isOpen      = match.status === MatchStatus.OPEN;
   const hasBet      = !!existingBet;
@@ -103,9 +111,16 @@ function BetCard({ match, existingBet, onBetSaved, onViewPicks }: BetCardProps) 
   const canEditMode = isOpen && hasBet;
   const inputsDisabled = !canCreate && !(canEditMode && isEditing);
 
+  const parsedHome = parseInt(homeScore);
+  const parsedAway = parseInt(awayScore);
+  const isDraw     = !isNaN(parsedHome) && !isNaN(parsedAway) && parsedHome === parsedAway;
+  const showPenaltySelector = isKnockout(match) && isDraw && (canCreate || (canEditMode && isEditing));
+  const showPenaltyResult   = isKnockout(match) && !isOpen && existingBet?.penaltyWinner;
+
   useEffect(() => {
     setHomeScore(String(existingBet?.homeScore ?? ''));
     setAwayScore(String(existingBet?.awayScore ?? ''));
+    setPenaltyWinner(existingBet?.penaltyWinner ?? null);
     setError('');
     setIsEditing(false);
   }, [existingBet]);
@@ -114,9 +129,10 @@ function BetCard({ match, existingBet, onBetSaved, onViewPicks }: BetCardProps) 
     const h = parseInt(homeScore);
     const a = parseInt(awayScore);
     if (isNaN(h) || isNaN(a) || h < 0 || a < 0) { setError('Preencha os placares corretamente.'); return; }
+    const effectivePenalty = (isKnockout(match) && h === a) ? penaltyWinner ?? undefined : undefined;
     setSaving(true); setError('');
     try {
-      await betsApi.create({ matchId: match._id, homeScore: h, awayScore: a });
+      await betsApi.create({ matchId: match._id, homeScore: h, awayScore: a, penaltyWinner: effectivePenalty });
       toast.success('Palpite registrado!');
       onBetSaved();
     } catch (e) {
@@ -130,9 +146,10 @@ function BetCard({ match, existingBet, onBetSaved, onViewPicks }: BetCardProps) 
     const h = parseInt(homeScore);
     const a = parseInt(awayScore);
     if (isNaN(h) || isNaN(a) || h < 0 || a < 0) { setError('Preencha os placares corretamente.'); return; }
+    const effectivePenalty = (isKnockout(match) && h === a) ? penaltyWinner ?? undefined : undefined;
     setSaving(true); setError('');
     try {
-      await betsApi.update(existingBet!._id, { homeScore: h, awayScore: a });
+      await betsApi.update(existingBet!._id, { homeScore: h, awayScore: a, penaltyWinner: effectivePenalty });
       toast.success('Palpite atualizado!');
       setIsEditing(false);
       onBetSaved();
@@ -146,6 +163,7 @@ function BetCard({ match, existingBet, onBetSaved, onViewPicks }: BetCardProps) 
   const handleCancelEdit = () => {
     setHomeScore(String(existingBet?.homeScore ?? ''));
     setAwayScore(String(existingBet?.awayScore ?? ''));
+    setPenaltyWinner(existingBet?.penaltyWinner ?? null);
     setError('');
     setIsEditing(false);
   };
@@ -219,6 +237,51 @@ function BetCard({ match, existingBet, onBetSaved, onViewPicks }: BetCardProps) 
           </div>
         </div>
 
+        {/* Seletor de pênaltis — visível ao apostar empate em mata-mata */}
+        {showPenaltySelector && (
+          <div className="mt-4 p-3 rounded-xl bg-yellow-900/20 border border-yellow-800/40">
+            <p className="text-xs font-semibold text-yellow-400 uppercase tracking-widest mb-2">Quem vence nos pênaltis?</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPenaltyWinner('home')}
+                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${
+                  penaltyWinner === 'home'
+                    ? 'bg-yellow-500 text-black'
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                }`}
+              >
+                {match.homeTeam}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPenaltyWinner('away')}
+                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${
+                  penaltyWinner === 'away'
+                    ? 'bg-yellow-500 text-black'
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                }`}
+              >
+                {match.awayTeam}
+              </button>
+            </div>
+            {penaltyWinner && (
+              <p className="text-xs text-yellow-500/70 mt-1.5 text-center">
+                +2pts extras se acertar os pênaltis
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Palpite de pênaltis já registrado (só leitura) */}
+        {showPenaltyResult && (
+          <p className="text-xs text-yellow-500/80 mt-1">
+            Pênaltis: <span className="font-bold text-yellow-400">
+              {existingBet!.penaltyWinner === 'home' ? match.homeTeam : match.awayTeam}
+            </span>
+          </p>
+        )}
+
         {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
         {!isOpen && !hasBet && (
           <p className="text-gray-600 text-xs mt-2">Esta partida não aceita mais palpites.</p>
@@ -226,9 +289,18 @@ function BetCard({ match, existingBet, onBetSaved, onViewPicks }: BetCardProps) 
 
         {canEditMode && !isEditing && (
           <div className="flex items-center justify-between mt-3">
-            <p className="text-brand-300 text-sm">
-              Seu palpite: <span className="font-bold">{existingBet?.homeScore} × {existingBet?.awayScore}</span>
-            </p>
+            <div>
+              <p className="text-brand-300 text-sm">
+                Seu palpite: <span className="font-bold">{existingBet?.homeScore} × {existingBet?.awayScore}</span>
+              </p>
+              {existingBet?.penaltyWinner && (
+                <p className="text-xs text-yellow-500/80 mt-0.5">
+                  Pênaltis: <span className="font-bold text-yellow-400">
+                    {existingBet.penaltyWinner === 'home' ? match.homeTeam : match.awayTeam}
+                  </span>
+                </p>
+              )}
+            </div>
             <button onClick={() => setIsEditing(true)} className="btn-secondary text-sm py-1.5">
               ✏️ Editar
             </button>
@@ -271,6 +343,35 @@ export default function BetsPage() {
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const pendingScrollToLastClosed = useRef(false);
+
+  const [showTip, setShowTip]       = useState(false);
+  const [tipVisible, setTipVisible] = useState(false);
+  const tipCountIncremented = useRef(false);
+
+  useEffect(() => {
+    const count = parseInt(localStorage.getItem('bolao_penalty_tip') ?? '0', 10);
+    if (count >= 5) return;
+
+    // Incrementa o contador só uma vez por visita (guard contra StrictMode double-invoke)
+    if (!tipCountIncremented.current) {
+      tipCountIncremented.current = true;
+      localStorage.setItem('bolao_penalty_tip', String(count + 1));
+    }
+
+    // Mostra o popup (roda normalmente em ambos os mounts do StrictMode — o segundo é o que vale)
+    setShowTip(true);
+    const showTimer    = setTimeout(() => setTipVisible(true), 50);
+    const dismissTimer = setTimeout(() => {
+      setTipVisible(false);
+      setTimeout(() => setShowTip(false), 500);
+    }, 7000);
+    return () => { clearTimeout(showTimer); clearTimeout(dismissTimer); };
+  }, []);
+
+  const dismissTip = () => {
+    setTipVisible(false);
+    setTimeout(() => setShowTip(false), 500);
+  };
 
   const load = async () => {
     try {
@@ -421,6 +522,42 @@ export default function BetsPage() {
       {/* Modal de palpites de todos */}
       {picksMatch && (
         <MatchPicksModal match={picksMatch} onClose={() => setPicksMatch(null)} />
+      )}
+
+      {/* Notificação: dica de pênaltis no mata-mata */}
+      {showTip && (
+        <div className={`fixed bottom-6 right-4 left-4 sm:left-auto sm:w-84 z-50 transition-all duration-500 ${
+          tipVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'
+        }`}>
+          <div className="bg-gray-900 border border-yellow-700/50 rounded-2xl p-4 shadow-2xl shadow-black/60">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-yellow-500/15 flex items-center justify-center shrink-0 text-xl">
+                🏆
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-white leading-snug">Novidade no mata-mata!</p>
+                <p className="text-xs text-gray-400 leading-relaxed mt-1">
+                  Palpite de <span className="text-white font-semibold">empate</span>? Agora você pode prever quem vence nos{' '}
+                  <span className="text-yellow-400 font-semibold">pênaltis</span> e ganhar até{' '}
+                  <span className="text-yellow-400 font-bold">+5 pts</span> por jogo!
+                </p>
+              </div>
+              <button
+                onClick={dismissTip}
+                className="text-gray-600 hover:text-gray-400 shrink-0 transition-colors -mt-0.5 -mr-0.5"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="mt-3 h-0.5 bg-gray-800 rounded-full overflow-hidden">
+              <div className={`h-full bg-yellow-500/50 rounded-full transition-[width] duration-[7000ms] ease-linear ${
+                tipVisible ? 'w-0' : 'w-full'
+              }`} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

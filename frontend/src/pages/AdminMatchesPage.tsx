@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { matchesApi } from '../api/services';
 import { getErrorMessage } from '../api/axios';
 import type { Match } from '../types';
@@ -35,6 +35,9 @@ export default function AdminMatchesPage() {
   const [saving, setSaving]       = useState(false);
   const [formError, setFormError] = useState('');
 
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const hasAutoScrolled = useRef(false);
+
   const load = async () => {
     try { setLoading(true); setMatches(await matchesApi.list()); setError(''); }
     catch (e) { setError(getErrorMessage(e)); }
@@ -42,6 +45,21 @@ export default function AdminMatchesPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (loading || matches.length === 0 || hasAutoScrolled.current) return;
+
+    const target =
+      matches.find(m => m.status === MatchStatus.OPEN) ??
+      [...matches].reverse().find(m => m.status === MatchStatus.CLOSED);
+
+    if (!target) return;
+
+    hasAutoScrolled.current = true;
+    setTimeout(() => {
+      cardRefs.current.get(target._id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 150);
+  }, [matches, loading]);
 
   const openCreate = () => { setCreateForm(emptyCreate); setFormError(''); setModal('create'); };
   const openResult = (m: Match) => { setSelected(m); setResultForm({ homeScore: '', awayScore: '' }); setFormError(''); setModal('result'); };
@@ -108,7 +126,11 @@ export default function AdminMatchesPage() {
       ) : (
         <div className="space-y-3">
           {matches.map(m => (
-            <div key={m._id} className="card flex flex-col sm:flex-row sm:items-center gap-4">
+            <div
+              key={m._id}
+              ref={el => { if (el) cardRefs.current.set(m._id, el); else cardRefs.current.delete(m._id); }}
+              className="card flex flex-col sm:flex-row sm:items-center gap-4"
+            >
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-1">
                   <StatusBadge status={m.status} />

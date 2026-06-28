@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { matchesApi, betsApi } from '../api/services';
 import { getErrorMessage } from '../api/axios';
 import type { Match, Bet } from '../types';
@@ -269,6 +269,9 @@ export default function BetsPage() {
   const [category, setCategory] = useState<string>('all');
   const [picksMatch, setPicksMatch] = useState<Match | null>(null);
 
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const hasAutoScrolled = useRef(false);
+
   const load = async () => {
     try {
       setLoading(true);
@@ -279,6 +282,21 @@ export default function BetsPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (loading || matches.length === 0 || hasAutoScrolled.current) return;
+
+    const lastClosed = [...matches].reverse().find(m => m.status === MatchStatus.CLOSED);
+    if (!lastClosed) return;
+
+    hasAutoScrolled.current = true;
+    setTab('all');
+    setCategory('all');
+
+    setTimeout(() => {
+      cardRefs.current.get(lastClosed._id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 200);
+  }, [matches, loading]);
 
   const betByMatch = (matchId: unknown) => {
     const id = getEntityId(matchId);
@@ -386,13 +404,17 @@ export default function BetsPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {displayed.map(m => (
-            <BetCard
+            <div
               key={m._id}
-              match={m}
-              existingBet={betByMatch(m._id)}
-              onBetSaved={load}
-              onViewPicks={setPicksMatch}
-            />
+              ref={el => { if (el) cardRefs.current.set(m._id, el); else cardRefs.current.delete(m._id); }}
+            >
+              <BetCard
+                match={m}
+                existingBet={betByMatch(m._id)}
+                onBetSaved={load}
+                onViewPicks={setPicksMatch}
+              />
+            </div>
           ))}
         </div>
       )}

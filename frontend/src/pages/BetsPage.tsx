@@ -287,11 +287,12 @@ export default function BetsPage() {
     if (!pendingScrollToLastClosed.current || tab !== 'all') return;
     pendingScrollToLastClosed.current = false;
 
-    const lastClosed = [...matches].reverse().find(m => m.status === MatchStatus.CLOSED);
-    if (!lastClosed) return;
+    const nonOpen = matches.filter(m => m.status !== MatchStatus.OPEN);
+    const last = nonOpen[nonOpen.length - 1];
+    if (!last) return;
 
     setTimeout(() => {
-      cardRefs.current.get(lastClosed._id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      cardRefs.current.get(last._id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 150);
   }, [tab, matches]);
 

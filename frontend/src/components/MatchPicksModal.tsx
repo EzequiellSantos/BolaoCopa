@@ -14,6 +14,7 @@ interface PickEntry {
   user: { _id: string; name: string } | string;
   homeScore: number;
   awayScore: number;
+  penaltyWinner?: 'home' | 'away' | null;
   result: BetResult;
   points: number;
 }
@@ -73,9 +74,16 @@ export default function MatchPicksModal({ match, onClose }: Props) {
             {match.homeTeam} <span className="text-gray-600 font-light">×</span> {match.awayTeam}
           </p>
           {isFinished && match.homeScore !== null && (
-            <p className="text-3xl font-black text-brand-400 mt-1">
-              {match.homeScore} <span className="text-gray-600 text-xl">×</span> {match.awayScore}
-            </p>
+            <>
+              <p className="text-3xl font-black text-brand-400 mt-1">
+                {match.homeScore} <span className="text-gray-600 text-xl">×</span> {match.awayScore}
+              </p>
+              {match.penaltyWinner && (
+                <p className="text-xs text-yellow-400 mt-1 font-semibold">
+                  🏆 {match.penaltyWinner === 'home' ? match.homeTeam : match.awayTeam} venceu nos pênaltis
+                </p>
+              )}
+            </>
           )}
           <p className="text-xs text-gray-500 mt-1">
             {picks.length} palpite(s) registrado(s)
@@ -113,6 +121,11 @@ export default function MatchPicksModal({ match, onClose }: Props) {
                       <span className="text-gray-600 mx-1">×</span>
                       <span className="font-bold text-gray-200">{pick.awayScore}</span> {match.awayTeam}
                     </p>
+                    {pick.penaltyWinner && (
+                      <p className="text-[11px] text-yellow-500/80 truncate mt-0.5">
+                        🏆 {pick.penaltyWinner === 'home' ? match.homeTeam : match.awayTeam} nos pênaltis
+                      </p>
+                    )}
                   </div>
 
                   {/* Badge de resultado */}

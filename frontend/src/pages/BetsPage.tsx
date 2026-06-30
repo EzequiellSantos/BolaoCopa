@@ -201,6 +201,11 @@ function BetCard({ match, existingBet, onBetSaved, onViewPicks }: BetCardProps) 
           <div className="text-right shrink-0">
             <p className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">Resultado</p>
             <p className="text-2xl font-black text-brand-400">{match.homeScore} × {match.awayScore}</p>
+            {match.penaltyWinner && (
+              <p className="text-xs text-yellow-400 mt-0.5 font-semibold">
+                🏆 {match.penaltyWinner === 'home' ? match.homeTeam : match.awayTeam} nos pênaltis
+              </p>
+            )}
           </div>
         )}
       </button>

@@ -146,7 +146,8 @@ function BetCard({ match, existingBet, onBetSaved, onViewPicks }: BetCardProps) 
     const h = parseInt(homeScore);
     const a = parseInt(awayScore);
     if (isNaN(h) || isNaN(a) || h < 0 || a < 0) { setError('Preencha os placares corretamente.'); return; }
-    const effectivePenalty = (isKnockout(match) && h === a) ? penaltyWinner ?? undefined : undefined;
+    // null é enviado explicitamente para que o backend limpe o campo quando não é empate em mata-mata
+    const effectivePenalty = (isKnockout(match) && h === a) ? penaltyWinner ?? undefined : null;
     setSaving(true); setError('');
     try {
       await betsApi.update(existingBet!._id, { homeScore: h, awayScore: a, penaltyWinner: effectivePenalty });

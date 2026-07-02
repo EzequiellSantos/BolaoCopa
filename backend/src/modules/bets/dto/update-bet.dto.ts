@@ -12,6 +12,6 @@ export class UpdateBetDto {
   awayScore?: number;
 
   @IsOptional()
-  @IsIn(['home', 'away'], { message: 'penaltyWinner deve ser "home" ou "away"' })
-  penaltyWinner?: 'home' | 'away';
+  @IsIn(['home', 'away', null], { message: 'penaltyWinner deve ser "home", "away" ou null' })
+  penaltyWinner?: 'home' | 'away' | null;
 }

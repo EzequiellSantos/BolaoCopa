@@ -83,7 +83,7 @@ export const betsApi = {
   getById: (id: string) =>
     api.get<Bet>(`/bets/${id}`).then(r => r.data),
 
-  update: (id: string, data: { homeScore?: number; awayScore?: number; penaltyWinner?: 'home' | 'away' }) =>
+  update: (id: string, data: { homeScore?: number; awayScore?: number; penaltyWinner?: 'home' | 'away' | null }) =>
     api.patch<Bet>(`/bets/${id}`, data).then(r => r.data),
 
   adminAll: () =>

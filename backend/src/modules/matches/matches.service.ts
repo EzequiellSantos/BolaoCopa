@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import moment from 'moment-timezone';
 import { Match, MatchDocument, MatchStatus } from './schemas/match.schema';
 import { Bet, BetDocument } from '../bets/schemas/bet.schema';
 import { CreateMatchDto } from './dto/create-match.dto';
@@ -49,10 +50,32 @@ export class MatchesService {
 
   // ─── Listar abertas (para apostas) ───────────────────────────────────
   async findOpen(): Promise<MatchDocument[]> {
+    if (!this.isOpenSearchAllowed()) {
+      return [];
+    }
+
     return this.matchModel
       .find({ status: MatchStatus.OPEN })
       .sort({ matchDate: 1 })
       .lean();
+  }
+
+  private isOpenSearchAllowed(): boolean {
+    const now = moment.tz('America/Sao_Paulo');
+    const hour = now.hour();
+    const minute = now.minute();
+
+    // Permite buscar partidas abertas apenas entre 12:00 (meio-dia) e 02:30 do dia seguinte.
+    // Fora deste intervalo, evita a consulta ao banco para reduzir uso de funções fluidas.
+    if (hour >= 12) {
+      return true;
+    }
+
+    if (hour < 2) {
+      return true;
+    }
+
+    return hour === 2 && minute < 30;
   }
 
   // ─── Buscar por ID ────────────────────────────────────────────────────

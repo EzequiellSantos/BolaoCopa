@@ -45,6 +45,9 @@ export default function Navbar() {
           <NavLink to="/ranking" className={navLinkClass}>
             🏆 Ranking
           </NavLink>
+          <NavLink to="/ganhos" className={navLinkClass}>
+            💰 Ganhos
+          </NavLink>
           {isAdmin && (
             <>
               <NavLink to="/admin/partidas" className={navLinkClass}>
@@ -101,6 +104,7 @@ export default function Navbar() {
           <NavLink to="/dashboard"     className={navLinkClass} onClick={() => setMenuOpen(false)}>🏠 Início</NavLink>
           <NavLink to="/palpites"       className={navLinkClass} onClick={() => setMenuOpen(false)}>🎯 Palpites</NavLink>
           <NavLink to="/ranking"       className={navLinkClass} onClick={() => setMenuOpen(false)}>🏆 Ranking</NavLink>
+          <NavLink to="/ganhos"        className={navLinkClass} onClick={() => setMenuOpen(false)}>💰 Ganhos</NavLink>
           {isAdmin && (
             <>
               <NavLink to="/admin/partidas" className={navLinkClass} onClick={() => setMenuOpen(false)}>⚽ Partidas</NavLink>

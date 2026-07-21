@@ -10,6 +10,7 @@ import { MatchesModule } from './modules/matches/matches.module';
 import { BetsModule } from './modules/bets/bets.module';
 import { RankingModule } from './modules/ranking/ranking.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { WinningsModule } from './modules/winnings/winnings.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     BetsModule,
     RankingModule,
     NotificationsModule,
+    WinningsModule,
   ],
 })
 export class AppModule {}

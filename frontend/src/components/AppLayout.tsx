@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
+import WinningsLoginNotice from './WinningsLoginNotice';
 
 export default function AppLayout() {
   return (
@@ -11,6 +12,7 @@ export default function AppLayout() {
       <footer className="border-t border-gray-800 py-4 text-center text-xs text-gray-700">
         Ezequiel Santos / Kevin Lima  © {new Date().getFullYear()}
       </footer>
+      <WinningsLoginNotice />
     </div>
   );
 }

@@ -8,6 +8,8 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  justLoggedIn: boolean;
+  clearJustLoggedIn: () => void;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -18,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser]       = useState<AuthUser | null>(null);
   const [token, setToken]     = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
 
   // ─── Rehydrate from localStorage on mount ────────────────────────────
   useEffect(() => {
@@ -43,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('user', JSON.stringify(data.user));
       setToken(data.accessToken);
       setUser(data.user);
+      setJustLoggedIn(true);
     } catch (err) {
       throw new Error(getErrorMessage(err));
     }
@@ -53,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
     setToken(null);
     setUser(null);
+    setJustLoggedIn(false);
   };
 
   return (
@@ -62,6 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token,
         isLoading,
         isAuthenticated: !!token && !!user,
+        justLoggedIn,
+        clearJustLoggedIn: () => setJustLoggedIn(false),
         login,
         logout,
       }}

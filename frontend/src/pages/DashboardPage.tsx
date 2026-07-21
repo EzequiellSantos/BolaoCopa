@@ -50,6 +50,12 @@ export default function DashboardPage() {
           label="Ranking"
           description="Veja a classificação geral."
         />
+        <QuickLink
+          to="/ganhos"
+          emoji="💰"
+          label="Meus Ganhos"
+          description="Simule quanto você ganharia apostando nas odds reais."
+        />
         {isAdmin && (
           <>
             <QuickLink

@@ -66,6 +66,39 @@ export interface RankingEntry {
   hitRate: number;
 }
 
+// ─── Ganhos simulados por odds ─────────────────────────────────────────────────
+export interface WinningsSummary {
+  totalBets: number;
+  hits: number;
+  hitRate: number;
+  totalStaked: number;
+  netProfit: number;
+}
+
+export interface WinningsMatchBreakdown {
+  matchId: string;
+  matchDate: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  description?: string;
+  betHomeScore: number;
+  betAwayScore: number;
+  homeOdd: number;
+  drawOdd: number;
+  awayOdd: number;
+  odd: number;
+  hit: boolean;
+  stake: number;
+  profit: number;
+}
+
+export interface WinningsDetail {
+  summary: WinningsSummary | null;
+  matches: WinningsMatchBreakdown[];
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 export interface AuthUser {
   id: string;

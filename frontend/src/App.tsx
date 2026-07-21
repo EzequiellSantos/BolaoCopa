@@ -8,6 +8,7 @@ import LoginPage         from './pages/LoginPage';
 import DashboardPage     from './pages/DashboardPage';
 import BetsPage          from './pages/BetsPage';
 import RankingPage       from './pages/RankingPage';
+import WinningsPage      from './pages/WinningsPage';
 import AdminUsersPage    from './pages/AdminUsersPage';
 import AdminMatchesPage  from './pages/AdminMatchesPage';
 import AdminNotificationsPage from './pages/AdminNotificationsPage';
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/dashboard"  element={<DashboardPage />} />
           <Route path="/palpites"    element={<BetsPage />} />
           <Route path="/ranking"    element={<RankingPage />} />
+          <Route path="/ganhos"     element={<WinningsPage />} />
 
           <Route element={<ProtectedRoute requiredRole={UserRole.ADMIN} />}>
             <Route path="/admin/partidas"  element={<AdminMatchesPage />} />

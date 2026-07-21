@@ -149,12 +149,12 @@ const COPA_2026_MATCHES: MatchSeed[] = [
 
   // ─── QUARTAS DE FINAL ────────────────────────────────────────────────
   // Quinta-feira, 9 de julho
-  { homeTeam: 'A Definir', awayTeam: 'A Definir', matchDate: '2026-07-09T20:00:00.000Z', description: 'Jogo 97 – Quartas de Final',  stadium: 'Boston',        status: MatchStatus.CLOSED },
+  { homeTeam: 'França',    awayTeam: 'Marrocos',   matchDate: '2026-07-09T20:00:00.000Z', description: 'Jogo 97 – Quartas de Final',  stadium: 'Boston',        status: MatchStatus.OPEN },
   // Sexta-feira, 10 de julho
-  { homeTeam: 'A Definir', awayTeam: 'A Definir', matchDate: '2026-07-10T19:00:00.000Z', description: 'Jogo 98 – Quartas de Final',  stadium: 'Los Angeles',   status: MatchStatus.CLOSED },
+  { homeTeam: 'Espanha',   awayTeam: 'Bélgica',    matchDate: '2026-07-10T19:00:00.000Z', description: 'Jogo 98 – Quartas de Final',  stadium: 'Los Angeles',   status: MatchStatus.OPEN },
   // Sábado, 11 de julho
-  { homeTeam: 'A Definir', awayTeam: 'A Definir', matchDate: '2026-07-11T21:00:00.000Z', description: 'Jogo 99 – Quartas de Final',  stadium: 'Miami',         status: MatchStatus.CLOSED },
-  { homeTeam: 'A Definir', awayTeam: 'A Definir', matchDate: '2026-07-12T01:00:00.000Z', description: 'Jogo 100 – Quartas de Final', stadium: 'Kansas City',   status: MatchStatus.CLOSED },
+  { homeTeam: 'Noruega',   awayTeam: 'Inglaterra', matchDate: '2026-07-11T21:00:00.000Z', description: 'Jogo 99 – Quartas de Final',  stadium: 'Miami',         status: MatchStatus.OPEN },
+  { homeTeam: 'Argentina', awayTeam: 'Suíça',      matchDate: '2026-07-12T01:00:00.000Z', description: 'Jogo 100 – Quartas de Final', stadium: 'Kansas City',   status: MatchStatus.OPEN },
 
   // ─── SEMIFINAIS ──────────────────────────────────────────────────────
   // Terça-feira, 14 de julho

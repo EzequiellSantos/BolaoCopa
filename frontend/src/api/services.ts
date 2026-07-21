@@ -1,5 +1,5 @@
 import { api } from './axios';
-import type { AuthResponse, User, Match, Bet, RankingEntry, MatchStatus } from '../types';
+import type { AuthResponse, User, Match, Bet, RankingEntry, MatchStatus, WinningsDetail } from '../types';
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 export const authApi = {
@@ -115,4 +115,10 @@ export const rankingApi = {
 
   me: () =>
     api.get<{ entry: RankingEntry | null; position: number | null }>('/ranking/me').then(r => r.data),
+};
+
+// ─── Ganhos simulados por odds ──────────────────────────────────────────────────
+export const winningsApi = {
+  me: () =>
+    api.get<WinningsDetail>('/winnings/me').then(r => r.data),
 };
